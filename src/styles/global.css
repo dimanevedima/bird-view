@@ -15,7 +15,7 @@
   --light-haze: rgba(143, 231, 216, 0.18);
   --light-wash: rgba(255, 248, 226, 0.1);
   --lamp-bulb: rgba(232, 255, 249, 0.86);
-  --lamp-x: 50%;
+  --lamp-swing-x: 0px;
   --lamp-drop: 0px;
   --lamp-angle: 0deg;
   --tilt-x: 0deg;
@@ -190,28 +190,26 @@ select:focus-visible {
 .motion-light::before {
   content: "";
   position: absolute;
-  inset: -8% -8% auto;
-  height: 72%;
+  inset: 0;
   background:
-    radial-gradient(ellipse at var(--lamp-x) 13%, var(--light-core), transparent 12rem),
-    radial-gradient(ellipse at var(--lamp-x) 28%, var(--light-haze), var(--light-wash) 34%, transparent 72%);
-  filter: blur(20px);
+    radial-gradient(ellipse at 50% 24%, var(--light-core), transparent 15rem),
+    radial-gradient(ellipse at 50% 36%, var(--light-haze), var(--light-wash) 38%, transparent 72%);
+  filter: blur(18px);
   mix-blend-mode: screen;
-  opacity: 0.76;
+  opacity: 0.58;
   transition: opacity 240ms ease;
-  -webkit-mask-image: radial-gradient(ellipse at 50% 35%, #000 0%, rgba(0, 0, 0, 0.9) 44%, transparent 82%);
-  mask-image: radial-gradient(ellipse at 50% 35%, #000 0%, rgba(0, 0, 0, 0.9) 44%, transparent 82%);
 }
 
 .lamp-rig {
   position: absolute;
   top: calc(18px + var(--lamp-drop));
-  left: var(--lamp-x);
+  left: 50%;
   width: 190px;
   height: 224px;
-  transform: translateX(-50%) rotate(var(--lamp-angle));
+  transform: translateX(calc(-50% + var(--lamp-swing-x))) rotate(var(--lamp-angle));
   transform-origin: 50% 0;
   transition: none;
+  will-change: transform;
 }
 
 .lamp-cable {
@@ -267,32 +265,33 @@ select:focus-visible {
 
 .light-cone {
   position: absolute;
-  left: calc(var(--lamp-x) - 44vw);
+  left: 50%;
   top: calc(176px + var(--lamp-drop));
   width: 88vw;
   height: min(560px, 68dvh);
-  transform: rotate(var(--beam-angle));
+  transform: translateX(calc(-50% + var(--lamp-swing-x))) rotate(var(--beam-angle));
   transform-origin: 50% 0;
   background:
-    radial-gradient(ellipse at 50% 6%, var(--lamp-bulb), transparent 5.2rem),
-    radial-gradient(ellipse at 50% 30%, var(--light-core), var(--light-wash) 39%, transparent 75%),
-    linear-gradient(90deg, transparent 17%, var(--light-wash) 42%, var(--light-wash) 58%, transparent 83%);
+    radial-gradient(ellipse at 50% 6%, var(--lamp-bulb), transparent 4.8rem),
+    radial-gradient(ellipse at 50% 32%, var(--light-core), var(--light-wash) 42%, transparent 78%);
   -webkit-mask-image: radial-gradient(ellipse at 50% 18%, #000 0%, rgba(0, 0, 0, 0.88) 18%, rgba(0, 0, 0, 0.38) 52%, transparent 86%);
   mask-image: radial-gradient(ellipse at 50% 18%, #000 0%, rgba(0, 0, 0, 0.88) 18%, rgba(0, 0, 0, 0.38) 52%, transparent 86%);
-  filter: blur(16px);
+  filter: blur(13px);
   mix-blend-mode: screen;
-  opacity: 0.82;
+  opacity: 0.7;
   transition: none;
+  will-change: transform;
 }
 
 .light-dust {
   position: absolute;
-  left: calc(var(--lamp-x) - 29vw);
+  left: 50%;
   top: 128px;
   width: 58vw;
   height: 410px;
   opacity: 0.17;
   filter: blur(0.2px);
+  transform: translateX(-50%);
   background-image:
     radial-gradient(circle, rgba(255, 255, 255, 0.65) 0 1px, transparent 1.4px),
     radial-gradient(circle, rgba(143, 231, 216, 0.32) 0 1px, transparent 1.5px);
@@ -1198,16 +1197,15 @@ select:focus-visible {
   .light-cone {
     top: calc(158px + var(--lamp-drop));
     width: 122vw;
-    left: calc(var(--lamp-x) - 61vw);
     height: min(520px, 66dvh);
-    opacity: 0.66;
+    opacity: 0.58;
   }
 
   .light-dust {
     top: 128px;
     width: 82vw;
-    left: calc(var(--lamp-x) - 41vw);
     height: 360px;
+    opacity: 0.1;
   }
 
   .timer-ritual {
@@ -1339,5 +1337,30 @@ select:focus-visible {
 
   .timer-ritual {
     transform: none;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 560px) {
+  .app {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  body::after {
+    content: "BIRD VIEW\A PORTRAIT ONLY";
+    white-space: pre;
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background:
+      radial-gradient(ellipse at 50% 36%, rgba(143, 231, 216, 0.08), transparent 18rem),
+      #080808;
+    color: rgba(232, 232, 232, 0.82);
+    display: grid;
+    place-items: center;
+    text-align: center;
+    font-size: 18px;
+    line-height: 2;
+    letter-spacing: 0.28em;
   }
 }

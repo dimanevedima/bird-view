@@ -17,9 +17,9 @@ const canUseDeviceMotion = typeof window !== "undefined" && "DeviceMotionEvent" 
 
 function setLightVars(angle: number, tiltX: number, tiltY: number) {
   const radians = (angle * Math.PI) / 180;
-  const x = 50 + Math.sin(radians) * 28;
+  const swingX = Math.sin(radians) * 54;
   const drop = (1 - Math.cos(radians)) * 150;
-  document.documentElement.style.setProperty("--lamp-x", `${x}%`);
+  document.documentElement.style.setProperty("--lamp-swing-x", `${swingX}px`);
   document.documentElement.style.setProperty("--lamp-drop", `${drop}px`);
   document.documentElement.style.setProperty("--tilt-x", `${tiltX}deg`);
   document.documentElement.style.setProperty("--tilt-y", `${tiltY}deg`);
@@ -32,6 +32,7 @@ export function MotionLight() {
   const askedMotion = useRef(false);
   const target = useRef({ angle: 0, tiltX: 0, tiltY: 0 });
   const physics = useRef({ angle: 0, velocity: 0, tiltX: 0, tiltY: 0 });
+  const lastWriteAt = useRef(0);
 
   useEffect(() => {
     const MotionEvent = DeviceOrientationEvent as OrientationEventWithPermission;
@@ -95,7 +96,10 @@ export function MotionLight() {
       state.angle += state.velocity;
       state.tiltX += (target.current.tiltX - state.tiltX) * 0.08;
       state.tiltY += (target.current.tiltY - state.tiltY) * 0.08;
-      setLightVars(state.angle, state.tiltX, state.tiltY);
+      if (now - lastWriteAt.current > 32) {
+        lastWriteAt.current = now;
+        setLightVars(state.angle, state.tiltX, state.tiltY);
+      }
       frameId = requestAnimationFrame(tick);
     }
 

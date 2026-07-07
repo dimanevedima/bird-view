@@ -4,7 +4,7 @@
   "start_url": "/bird-view/",
   "scope": "/bird-view/",
   "display": "standalone",
-  "orientation": "portrait",
+  "orientation": "portrait-primary",
   "background_color": "#080808",
   "theme_color": "#080808",
   "description": "A minimal focus timer with Bird View and Pixel View modes.",

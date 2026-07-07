@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "./components/AppShell";
 import { StatsScreen } from "./components/StatsScreen";
 import { TimerSettingsPanel } from "./components/TimerSettingsPanel";
@@ -11,8 +11,8 @@ const STORAGE_KEY = "bird-view-timer-state";
 
 const initialState: AppState = {
   settings: {
-    activePresetId: "5-45",
-    focusMode: "bird",
+    activePresetId: "pixel-3-30",
+    focusMode: "pixel",
     soundEnabled: true,
     soundId: "soft",
   },
@@ -39,6 +39,23 @@ export default function App() {
     [storedState],
   );
   const timer = useTimer({ appState, setAppState });
+
+  useEffect(() => {
+    async function lockPortrait() {
+      const orientation = screen.orientation as ScreenOrientation & {
+        lock?: (orientation: "portrait-primary" | "portrait") => Promise<void>;
+      };
+      await orientation.lock?.("portrait-primary").catch(() => undefined);
+    }
+
+    lockPortrait();
+    document.addEventListener("visibilitychange", lockPortrait);
+    window.addEventListener("orientationchange", lockPortrait);
+    return () => {
+      document.removeEventListener("visibilitychange", lockPortrait);
+      window.removeEventListener("orientationchange", lockPortrait);
+    };
+  }, []);
 
   return (
     <AppShell activeTab={activeTab} onOpenSettings={() => setSettingsOpen(true)} onTabChange={setActiveTab}>
