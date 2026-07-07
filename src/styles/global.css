@@ -216,11 +216,14 @@ select:focus-visible {
 }
 
 .lamp-rig {
-  --swing-angle: 7deg;
-  --swing-duration: 5200ms;
-  --swing-x: 48px;
-  --swing-drop: 4px;
-  --swing-delay: -900ms;
+  --swing-angle: 9.5deg;
+  --swing-duration: 3300ms;
+  --swing-x: 64px;
+  --swing-drop: 7px;
+  --swing-mid-left: 12px;
+  --swing-mid-right: 9px;
+  --swing-mid-drop-left: 3px;
+  --swing-mid-drop-right: 2px;
   position: absolute;
   top: 18px;
   left: 50%;
@@ -229,7 +232,7 @@ select:focus-visible {
   height: 224px;
   transform: translateX(-50%);
   transform-origin: 50% 0;
-  animation: lampAutoSwing var(--swing-duration) cubic-bezier(0.46, 0, 0.54, 1) var(--swing-delay) infinite;
+  animation: lampAutoSwing var(--swing-duration) cubic-bezier(0.45, 0, 0.55, 1) infinite;
   will-change: transform;
 }
 
@@ -343,8 +346,16 @@ select:focus-visible {
     transform: translateX(calc(-50% - var(--swing-x))) translateY(var(--swing-drop)) rotate(calc(var(--swing-angle) * -1));
   }
 
+  24% {
+    transform: translateX(calc(-50% - var(--swing-mid-left))) translateY(var(--swing-mid-drop-left)) rotate(-1.4deg);
+  }
+
   50% {
     transform: translateX(calc(-50% + var(--swing-x))) translateY(0) rotate(var(--swing-angle));
+  }
+
+  76% {
+    transform: translateX(calc(-50% + var(--swing-mid-right))) translateY(var(--swing-mid-drop-right)) rotate(1.1deg);
   }
 }
 
@@ -1195,7 +1206,14 @@ select:focus-visible {
   }
 
   .lamp-rig {
-    --swing-x: 34px;
+    --swing-angle: 7.8deg;
+    --swing-duration: 3000ms;
+    --swing-x: 46px;
+    --swing-drop: 5px;
+    --swing-mid-left: 9px;
+    --swing-mid-right: 7px;
+    --swing-mid-drop-left: 2px;
+    --swing-mid-drop-right: 2px;
     top: 24px;
     width: 154px;
     height: 204px;
