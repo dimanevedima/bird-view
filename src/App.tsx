@@ -11,8 +11,8 @@ const STORAGE_KEY = "bird-view-timer-state";
 
 const initialState: AppState = {
   settings: {
-    activePresetId: "pixel-3-30",
-    focusMode: "pixel",
+    activePresetId: "3-30",
+    focusMode: "bird",
     soundEnabled: true,
     soundId: "soft",
   },
