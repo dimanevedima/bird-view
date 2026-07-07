@@ -11,6 +11,15 @@
   --accent-dim: rgba(143, 231, 216, 0.35);
   --pixel: #d9cfb4;
   --warm-light: rgba(255, 245, 220, 0.75);
+  --light-core: rgba(221, 255, 247, 0.36);
+  --light-haze: rgba(143, 231, 216, 0.18);
+  --light-wash: rgba(255, 248, 226, 0.1);
+  --lamp-bulb: rgba(232, 255, 249, 0.86);
+  --lamp-x: 50%;
+  --lamp-y: 15%;
+  --tilt-x: 0deg;
+  --tilt-y: 0deg;
+  --beam-angle: 0deg;
   color: var(--text);
   background: var(--bg);
   font-family: "Courier New", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
@@ -33,7 +42,8 @@ body {
 }
 
 button,
-input {
+input,
+select {
   font: inherit;
 }
 
@@ -43,7 +53,8 @@ button {
 }
 
 button:focus-visible,
-input:focus-visible {
+input:focus-visible,
+select:focus-visible {
   outline: 1px solid var(--accent);
   outline-offset: 3px;
 }
@@ -116,6 +127,24 @@ input:focus-visible {
   text-transform: uppercase;
 }
 
+.settings-trigger {
+  justify-self: end;
+  min-height: 44px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px;
+  text-transform: uppercase;
+}
+
+.settings-trigger:hover {
+  color: var(--text);
+  border-color: var(--border);
+}
+
 .mode-light span {
   width: 9px;
   height: 9px;
@@ -130,21 +159,180 @@ input:focus-visible {
   padding: 0 0 34px;
 }
 
-.lamp-scene {
-  position: absolute;
-  inset: -106px 0 auto;
-  z-index: 0;
-  height: 620px;
-  pointer-events: none;
-  opacity: 0.92;
-  -webkit-mask-image: radial-gradient(ellipse at 50% 43%, #000 0%, #000 42%, transparent 76%);
-  mask-image: radial-gradient(ellipse at 50% 43%, #000 0%, #000 42%, transparent 76%);
+.timer-screen.focus-pixel {
+  --accent: #d9cfb4;
+  --accent-dim: rgba(217, 207, 180, 0.34);
+  --warm-light: rgba(255, 225, 158, 0.78);
+  --light-core: rgba(255, 213, 139, 0.42);
+  --light-haze: rgba(238, 196, 112, 0.24);
+  --light-wash: rgba(217, 207, 180, 0.14);
+  --lamp-bulb: rgba(255, 232, 172, 0.92);
 }
 
-.lamp-scene canvas {
-  width: 100%;
-  height: 100%;
-  display: block;
+.motion-light {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.motion-light::before {
+  content: "";
+  position: absolute;
+  inset: -8% -8% auto;
+  height: 72%;
+  background:
+    radial-gradient(ellipse at var(--lamp-x) 13%, var(--light-core), transparent 12rem),
+    radial-gradient(ellipse at var(--lamp-x) 28%, var(--light-haze), var(--light-wash) 34%, transparent 72%);
+  filter: blur(20px);
+  mix-blend-mode: screen;
+  opacity: 0.76;
+  transition: opacity 240ms ease;
+  -webkit-mask-image: radial-gradient(ellipse at 50% 35%, #000 0%, rgba(0, 0, 0, 0.9) 44%, transparent 82%);
+  mask-image: radial-gradient(ellipse at 50% 35%, #000 0%, rgba(0, 0, 0, 0.9) 44%, transparent 82%);
+}
+
+.lamp-rig {
+  position: absolute;
+  top: -48px;
+  left: var(--lamp-x);
+  width: 180px;
+  height: 178px;
+  transform: translateX(-50%) rotate(var(--beam-angle));
+  transform-origin: 50% 0;
+  transition: left 180ms ease-out, transform 180ms ease-out;
+  animation: lampSwing 5.8s ease-in-out infinite alternate;
+}
+
+.lamp-cable {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 1px;
+  height: 92px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.26));
+}
+
+.lamp-cap {
+  position: absolute;
+  left: 50%;
+  top: 82px;
+  width: 138px;
+  height: 58px;
+  border-radius: 72px 72px 10px 10px;
+  transform: translateX(-50%);
+  background:
+    radial-gradient(ellipse at 50% 105%, var(--lamp-bulb), transparent 30%),
+    linear-gradient(180deg, #181818, #050505 74%);
+  box-shadow:
+    inset 0 -1px 0 rgba(255, 255, 255, 0.22),
+    0 16px 40px rgba(0, 0, 0, 0.82),
+    0 0 62px rgba(255, 241, 206, 0.1);
+}
+
+.lamp-cap::after {
+  content: "";
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  bottom: -3px;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255, 246, 222, 0.82);
+  box-shadow:
+    0 0 18px var(--light-core),
+    0 0 48px var(--light-haze);
+}
+
+.lamp-glow {
+  position: absolute;
+  left: 50%;
+  top: 116px;
+  width: 210px;
+  height: 76px;
+  transform: translateX(-50%);
+  background: radial-gradient(ellipse, var(--light-core), transparent 68%);
+  filter: blur(12px);
+}
+
+.light-cone {
+  position: absolute;
+  left: calc(var(--lamp-x) - 44vw);
+  top: 74px;
+  width: 88vw;
+  height: min(560px, 68dvh);
+  transform: rotate(var(--beam-angle));
+  transform-origin: 50% 0;
+  background:
+    radial-gradient(ellipse at 50% 6%, var(--lamp-bulb), transparent 5.2rem),
+    radial-gradient(ellipse at 50% 30%, var(--light-core), var(--light-wash) 39%, transparent 75%),
+    linear-gradient(90deg, transparent 17%, var(--light-wash) 42%, var(--light-wash) 58%, transparent 83%);
+  -webkit-mask-image: radial-gradient(ellipse at 50% 18%, #000 0%, rgba(0, 0, 0, 0.88) 18%, rgba(0, 0, 0, 0.38) 52%, transparent 86%);
+  mask-image: radial-gradient(ellipse at 50% 18%, #000 0%, rgba(0, 0, 0, 0.88) 18%, rgba(0, 0, 0, 0.38) 52%, transparent 86%);
+  filter: blur(16px);
+  mix-blend-mode: screen;
+  opacity: 0.82;
+  transition: left 180ms ease-out, transform 180ms ease-out;
+}
+
+.light-dust {
+  position: absolute;
+  left: calc(var(--lamp-x) - 29vw);
+  top: 128px;
+  width: 58vw;
+  height: 410px;
+  opacity: 0.17;
+  filter: blur(0.2px);
+  background-image:
+    radial-gradient(circle, rgba(255, 255, 255, 0.65) 0 1px, transparent 1.4px),
+    radial-gradient(circle, rgba(143, 231, 216, 0.32) 0 1px, transparent 1.5px);
+  background-size: 77px 69px, 113px 91px;
+  -webkit-mask-image: radial-gradient(ellipse at 50% 36%, #000, transparent 76%);
+  mask-image: radial-gradient(ellipse at 50% 36%, #000, transparent 76%);
+  animation: dustDrift 16s linear infinite;
+}
+
+.motion-permission {
+  pointer-events: auto;
+  position: absolute;
+  left: 50%;
+  top: 154px;
+  transform: translateX(-50%);
+  min-height: 38px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  background: rgba(10, 10, 10, 0.64);
+  color: rgba(232, 232, 232, 0.58);
+  padding: 0 14px;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  backdrop-filter: blur(12px);
+}
+
+.motion-permission:hover,
+.motion-permission:focus-visible {
+  color: var(--accent);
+  border-color: var(--accent-dim);
+}
+
+@keyframes lampSwing {
+  from {
+    rotate: -0.5deg;
+  }
+  to {
+    rotate: 0.8deg;
+  }
+}
+
+@keyframes dustDrift {
+  from {
+    background-position: 0 0, 0 0;
+  }
+  to {
+    background-position: 77px 69px, -113px 91px;
+  }
 }
 
 .timer-ritual {
@@ -157,6 +345,67 @@ input:focus-visible {
   align-items: center;
   justify-content: center;
   text-align: center;
+  transform: perspective(900px) rotateX(var(--tilt-y)) rotateY(var(--tilt-x));
+  transform-style: preserve-3d;
+  transition: transform 160ms ease-out;
+}
+
+.pull-cord {
+  position: absolute;
+  top: 0;
+  right: clamp(14px, 4vw, 54px);
+  z-index: 4;
+  width: 58px;
+  height: 220px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  padding: 0;
+  touch-action: manipulation;
+}
+
+.cord-line {
+  width: 1px;
+  height: 148px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0.08));
+  transform-origin: top center;
+  transition: transform 360ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.cord-handle {
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 45% 38%, rgba(255, 255, 255, 0.22), transparent 30%),
+    rgba(12, 12, 12, 0.86);
+  box-shadow: 0 0 20px rgba(255, 245, 220, 0.08);
+  transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
+}
+
+.pull-cord small {
+  margin-top: 10px;
+  color: var(--muted-2);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  writing-mode: vertical-rl;
+}
+
+.pull-cord:hover .cord-line,
+.pull-cord:focus-visible .cord-line {
+  transform: rotate(3deg);
+}
+
+.pull-cord:hover .cord-handle,
+.pull-cord:focus-visible .cord-handle {
+  border-color: var(--accent-dim);
+  box-shadow: 0 0 22px var(--accent-dim);
+  transform: translateY(10px);
 }
 
 .eyebrow,
@@ -169,9 +418,23 @@ input:focus-visible {
 }
 
 .eyebrow {
-  color: rgba(232, 232, 232, 0.74);
+  position: relative;
+  z-index: 3;
+  color: rgba(238, 255, 251, 0.9);
   font-size: 24px;
   letter-spacing: 0.45em;
+  text-shadow:
+    0 1px 10px rgba(0, 0, 0, 0.95),
+    0 0 20px var(--accent-dim),
+    0 0 42px rgba(0, 0, 0, 0.85);
+}
+
+.focus-pixel .eyebrow {
+  color: rgba(255, 237, 192, 0.92);
+  text-shadow:
+    0 1px 10px rgba(0, 0, 0, 0.95),
+    0 0 22px rgba(217, 207, 180, 0.28),
+    0 0 42px rgba(0, 0, 0, 0.85);
 }
 
 .clock {
@@ -252,7 +515,8 @@ input:focus-visible {
 
 .controls button,
 .preset,
-.stats-footer button {
+.stats-footer button,
+.settings-panel button {
   min-height: 48px;
   border: 1px solid var(--border);
   border-radius: 6px;
@@ -269,7 +533,8 @@ input:focus-visible {
 
 .controls button:hover,
 .preset:hover,
-.stats-footer button:hover {
+.stats-footer button:hover,
+.settings-panel button:hover {
   border-color: var(--border-strong);
   color: var(--text);
 }
@@ -279,6 +544,173 @@ input:focus-visible {
   border-color: var(--accent-dim);
   color: var(--accent);
   box-shadow: inset 0 0 18px rgba(143, 231, 216, 0.06), 0 0 24px rgba(143, 231, 216, 0.08);
+}
+
+.settings-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  background: rgba(0, 0, 0, 0.64);
+  display: grid;
+  place-items: end center;
+  padding: 18px;
+}
+
+.settings-panel {
+  width: min(100%, 780px);
+  max-height: min(88dvh, 780px);
+  overflow: auto;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background:
+    radial-gradient(circle at 52% 0%, rgba(143, 231, 216, 0.08), transparent 22rem),
+    rgba(10, 10, 10, 0.96);
+  box-shadow: 0 -24px 90px rgba(0, 0, 0, 0.55);
+  padding: 22px;
+}
+
+.settings-header {
+  display: grid;
+  grid-template-columns: 48px 1fr 48px;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 18px;
+}
+
+.icon-button {
+  width: 48px;
+  padding: 0;
+}
+
+.icon-button.confirm {
+  color: var(--accent);
+}
+
+.mode-switch {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.mode-switch button,
+.save-combo,
+.sound-toggle {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: rgba(16, 16, 16, 0.72);
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.mode-switch button.active,
+.sound-toggle.on {
+  color: var(--accent);
+  border-color: var(--accent-dim);
+  box-shadow: inset 0 0 18px rgba(143, 231, 216, 0.05);
+}
+
+.settings-section {
+  margin-top: 22px;
+}
+
+.settings-label {
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: 13px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.preset-grid,
+.sound-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.interval-editor {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.interval-editor label {
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.interval-editor input,
+.interval-editor select {
+  width: 100%;
+  min-height: 58px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.025);
+  color: var(--text);
+  padding: 0 16px;
+  font-size: 24px;
+  font-variant-numeric: tabular-nums;
+}
+
+.interval-editor select {
+  font-size: 16px;
+  text-transform: uppercase;
+}
+
+.save-combo {
+  width: 100%;
+  margin-top: 10px;
+}
+
+.sound-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.sound-toggle {
+  min-height: 40px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sound-option {
+  min-height: 92px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: rgba(16, 16, 16, 0.72);
+  color: var(--muted);
+  display: grid;
+  align-content: center;
+  gap: 6px;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.sound-option span {
+  color: var(--text);
+}
+
+.sound-option small {
+  color: var(--muted);
+}
+
+.sound-option svg {
+  justify-self: end;
+}
+
+.sound-option.active {
+  border-color: var(--accent-dim);
+  color: var(--accent);
 }
 
 .preset {
@@ -683,10 +1115,39 @@ input:focus-visible {
     padding-bottom: 24px;
   }
 
-  .lamp-scene {
-    inset: -92px -28px auto;
-    height: 486px;
-    opacity: 0.88;
+  .lamp-rig {
+    width: 148px;
+    height: 150px;
+  }
+
+  .lamp-cable {
+    height: 70px;
+  }
+
+  .lamp-cap {
+    top: 62px;
+    width: 118px;
+    height: 48px;
+  }
+
+  .lamp-glow {
+    top: 94px;
+    width: 180px;
+  }
+
+  .light-cone {
+    top: 88px;
+    width: 122vw;
+    left: calc(var(--lamp-x) - 61vw);
+    height: min(520px, 66dvh);
+    opacity: 0.66;
+  }
+
+  .light-dust {
+    top: 128px;
+    width: 82vw;
+    left: calc(var(--lamp-x) - 41vw);
+    height: 360px;
   }
 
   .timer-ritual {
@@ -700,6 +1161,19 @@ input:focus-visible {
 
   .controls button {
     flex: 1 1 140px;
+  }
+
+  .controls button:last-child {
+    flex-basis: 100%;
+  }
+
+  .pull-cord {
+    right: 0;
+    height: 172px;
+  }
+
+  .cord-line {
+    height: 110px;
   }
 
   .clock {
@@ -775,6 +1249,25 @@ input:focus-visible {
   .timeline i:nth-child(n + 37) {
     display: none;
   }
+
+  .settings-scrim {
+    padding: 10px;
+  }
+
+  .settings-panel {
+    max-height: 92dvh;
+    padding: 18px;
+  }
+
+  .preset-grid,
+  .sound-grid,
+  .interval-editor {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .interval-editor label:last-child {
+    grid-column: span 2;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -784,5 +1277,9 @@ input:focus-visible {
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
+  }
+
+  .timer-ritual {
+    transform: none;
   }
 }

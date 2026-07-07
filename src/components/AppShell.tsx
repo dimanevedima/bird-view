@@ -1,13 +1,14 @@
-import { BarChart3, Clock3 } from "lucide-react";
+import { BarChart3, Clock3, SlidersHorizontal } from "lucide-react";
 import type { ReactNode } from "react";
 
 type Props = {
   activeTab: "timer" | "stats";
+  onOpenSettings: () => void;
   onTabChange: (tab: "timer" | "stats") => void;
   children: ReactNode;
 };
 
-export function AppShell({ activeTab, onTabChange, children }: Props) {
+export function AppShell({ activeTab, onOpenSettings, onTabChange, children }: Props) {
   return (
     <div className="app">
       <header className="topbar">
@@ -25,10 +26,10 @@ export function AppShell({ activeTab, onTabChange, children }: Props) {
             Stats
           </button>
         </nav>
-        <div className="mode-light">
-          <span />
-          Focus Mode
-        </div>
+        <button className="settings-trigger" onClick={onOpenSettings} aria-label="Open timer settings">
+          <SlidersHorizontal size={17} />
+          Control
+        </button>
       </header>
       <main>{children}</main>
     </div>
