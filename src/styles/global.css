@@ -216,15 +216,20 @@ select:focus-visible {
 }
 
 .lamp-rig {
+  --swing-angle: 7deg;
+  --swing-duration: 5200ms;
+  --swing-x: 48px;
+  --swing-drop: 4px;
+  --swing-delay: -900ms;
   position: absolute;
-  top: calc(18px + var(--lamp-drop));
+  top: 18px;
   left: 50%;
   z-index: 2;
   width: 190px;
   height: 224px;
-  transform: translateX(calc(-50% + var(--lamp-swing-x))) rotate(var(--lamp-angle));
+  transform: translateX(-50%);
   transform-origin: 50% 0;
-  transition: none;
+  animation: lampAutoSwing var(--swing-duration) cubic-bezier(0.46, 0, 0.54, 1) var(--swing-delay) infinite;
   will-change: transform;
 }
 
@@ -329,6 +334,24 @@ select:focus-visible {
   }
   to {
     background-position: 77px 69px, -113px 91px;
+  }
+}
+
+@keyframes lampAutoSwing {
+  0%,
+  100% {
+    transform: translateX(calc(-50% - var(--swing-x))) translateY(var(--swing-drop)) rotate(calc(var(--swing-angle) * -1));
+  }
+
+  50% {
+    transform: translateX(calc(-50% + var(--swing-x))) translateY(0) rotate(var(--swing-angle));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lamp-rig,
+  .light-dust {
+    animation: none;
   }
 }
 
@@ -1172,7 +1195,8 @@ select:focus-visible {
   }
 
   .lamp-rig {
-    top: calc(24px + var(--lamp-drop));
+    --swing-x: 34px;
+    top: 24px;
     width: 154px;
     height: 204px;
   }
@@ -1197,13 +1221,15 @@ select:focus-visible {
     width: 120vw;
     height: min(570px, 72dvh);
     opacity: 0.78;
+    filter: blur(10px);
   }
 
   .light-dust {
     top: 128px;
     width: 82vw;
     height: 360px;
-    opacity: 0.1;
+    opacity: 0.075;
+    animation: none;
   }
 
   .timer-ritual {

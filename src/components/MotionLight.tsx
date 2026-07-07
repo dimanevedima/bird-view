@@ -1,78 +1,47 @@
 import { useEffect, useRef } from "react";
 
-function setLightVars(angle: number, tiltX: number, tiltY: number) {
-  const radians = (angle * Math.PI) / 180;
-  const swingX = Math.sin(radians) * 54;
-  const drop = (1 - Math.cos(radians)) * 150;
-  document.documentElement.style.setProperty("--lamp-swing-x", `${swingX}px`);
-  document.documentElement.style.setProperty("--lamp-drop", `${drop}px`);
-  document.documentElement.style.setProperty("--tilt-x", `${tiltX}deg`);
-  document.documentElement.style.setProperty("--tilt-y", `${tiltY}deg`);
-  document.documentElement.style.setProperty("--lamp-angle", `${angle}deg`);
-}
-
 function nextSwing() {
+  const isPhone = window.innerWidth < 720;
+  const angle = (isPhone ? 3.8 : 4.8) + Math.random() * (isPhone ? 3.1 : 4.4);
   return {
-    amplitude: 5.8 + Math.random() * 5.2,
-    period: 1750 + Math.random() * 1900,
-    phase: Math.random() * Math.PI * 2,
-    drift: (Math.random() - 0.5) * 3.5,
-    until: performance.now() + 2600 + Math.random() * 4200,
+    angle,
+    duration: 3900 + Math.random() * 2800,
+    x: (isPhone ? 22 : 36) + angle * (isPhone ? 1.8 : 2.2),
+    drop: 2 + angle * 0.26,
+    delay: -Math.random() * 2400,
   };
 }
 
 export function MotionLight() {
-  const target = useRef({ angle: 0, tiltX: 0, tiltY: 0 });
-  const physics = useRef({ angle: 0, velocity: 0, tiltX: 0, tiltY: 0 });
-  const swing = useRef(nextSwing());
-  const lastWriteAt = useRef(0);
+  const rigRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduceMotion) return;
+    document.documentElement.style.setProperty("--tilt-x", "0deg");
+    document.documentElement.style.setProperty("--tilt-y", "0deg");
 
-    let frameId = 0;
-    const startedAt = performance.now();
-
-    function tick(now: number) {
-      if (now > swing.current.until) {
-        swing.current = nextSwing();
+    function applySwing(withDelay = false) {
+      const rig = rigRef.current;
+      if (!rig) return;
+      const swing = nextSwing();
+      rig.style.setProperty("--swing-angle", `${swing.angle.toFixed(2)}deg`);
+      rig.style.setProperty("--swing-duration", `${Math.round(swing.duration)}ms`);
+      rig.style.setProperty("--swing-x", `${Math.round(swing.x)}px`);
+      rig.style.setProperty("--swing-drop", `${swing.drop.toFixed(1)}px`);
+      if (withDelay) {
+        rig.style.setProperty("--swing-delay", `${Math.round(swing.delay)}ms`);
       }
-
-      const seconds = now - startedAt;
-      const currentSwing = swing.current;
-      const slowArc = Math.sin(seconds / currentSwing.period + currentSwing.phase) * currentSwing.amplitude;
-      const smallUnevenness = Math.sin(seconds / (currentSwing.period * 0.43) + currentSwing.phase * 0.7) * 1.2;
-      const breathingTilt = Math.cos(seconds / (currentSwing.period * 1.15)) * 0.65;
-
-      target.current = {
-        angle: slowArc + smallUnevenness + currentSwing.drift,
-        tiltX: (slowArc + currentSwing.drift) * 0.055,
-        tiltY: breathingTilt,
-      };
-
-      const state = physics.current;
-      const pull = (target.current.angle - state.angle) * 0.075;
-      state.velocity = (state.velocity + pull) * 0.925;
-      state.angle += state.velocity;
-      state.tiltX += (target.current.tiltX - state.tiltX) * 0.055;
-      state.tiltY += (target.current.tiltY - state.tiltY) * 0.055;
-
-      if (now - lastWriteAt.current > 32) {
-        lastWriteAt.current = now;
-        setLightVars(state.angle, state.tiltX, state.tiltY);
-      }
-
-      frameId = requestAnimationFrame(tick);
     }
 
-    frameId = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frameId);
+    applySwing(true);
+    const rig = rigRef.current;
+    const updateOnIteration = () => applySwing();
+    rig?.addEventListener("animationiteration", updateOnIteration);
+    return () => rig?.removeEventListener("animationiteration", updateOnIteration);
   }, []);
 
   return (
     <div className="motion-light">
-      <div className="lamp-rig" aria-hidden="true">
+      <div className="lamp-rig" ref={rigRef} aria-hidden="true">
         <span className="lamp-cable" />
         <span className="lamp-cap" />
         <span className="lamp-glow" />
