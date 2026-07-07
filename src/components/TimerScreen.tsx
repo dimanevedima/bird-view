@@ -1,11 +1,11 @@
-import type { Dispatch, SetStateAction } from "react";
-import { Pause, Play, RotateCcw, Settings, SkipForward, Square } from "lucide-react";
+import { useRef, useState } from "react";
+import type { CSSProperties, Dispatch, PointerEvent, SetStateAction, TouchEvent } from "react";
+import { Pause, Play, RotateCcw, SkipForward, Square } from "lucide-react";
 import { birdPresets, pixelPresets } from "../data/presets";
 import { MotionLight } from "./MotionLight";
 import type { AppState } from "../types";
-import { getTodayStats } from "../utils/stats";
 import { playSound } from "../utils/sound";
-import { formatClock, formatDuration } from "../utils/time";
+import { formatClock } from "../utils/time";
 
 type TimerApi = ReturnType<typeof import("../hooks/useTimer").useTimer>;
 
@@ -16,12 +16,12 @@ type Props = {
   timer: TimerApi;
 };
 
-export function TimerScreen({ appState, onOpenSettings, setAppState, timer }: Props) {
-  const today = getTodayStats(appState.sessions);
+export function TimerScreen({ appState, setAppState, timer }: Props) {
   const focusMode = appState.settings.focusMode ?? "bird";
+  const pullStartY = useRef<number | null>(null);
+  const [pullDistance, setPullDistance] = useState(0);
   const dots = Array.from({ length: 24 }, (_, index) => index < Math.round(timer.progress * 24));
-  const modeLabel = timer.mode === "bird" ? "Work Pulse" : timer.mode === "empty" ? "Empty Space" : "Pixel View";
-  const nextLabel = timer.mode === "empty" ? timer.activePreset.mode === "pixel" ? "Pixel View" : "Bird View" : "Empty Space";
+  const modeLabel = timer.mode === "bird" ? "Work Pulse" : timer.mode === "empty" ? "Empty Space" : "Pixel Block";
 
   function toggleFocusMode() {
     const nextFocusMode = focusMode === "pixel" ? "bird" : "pixel";
@@ -37,10 +37,64 @@ export function TimerScreen({ appState, onOpenSettings, setAppState, timer }: Pr
     playSound(appState.settings.soundId, "toggle", appState.settings.soundEnabled);
   }
 
+  function startPull(event: PointerEvent<HTMLButtonElement>) {
+    pullStartY.current = event.clientY;
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+
+  function movePull(event: PointerEvent<HTMLButtonElement>) {
+    if (pullStartY.current === null) return;
+    event.preventDefault();
+    const distance = Math.max(0, Math.min(74, event.clientY - pullStartY.current));
+    setPullDistance(distance);
+  }
+
+  function endPull(event: PointerEvent<HTMLButtonElement>) {
+    if (pullStartY.current === null) return;
+    event.preventDefault();
+    const shouldToggle = pullDistance > 46;
+    pullStartY.current = null;
+    setPullDistance(0);
+    if (shouldToggle) toggleFocusMode();
+  }
+
+  function startTouchPull(event: TouchEvent<HTMLButtonElement>) {
+    pullStartY.current = event.touches[0]?.clientY ?? null;
+  }
+
+  function moveTouchPull(event: TouchEvent<HTMLButtonElement>) {
+    if (pullStartY.current === null) return;
+    event.preventDefault();
+    const y = event.touches[0]?.clientY ?? pullStartY.current;
+    const distance = Math.max(0, Math.min(74, y - pullStartY.current));
+    setPullDistance(distance);
+  }
+
+  function endTouchPull(event: TouchEvent<HTMLButtonElement>) {
+    if (pullStartY.current === null) return;
+    event.preventDefault();
+    const shouldToggle = pullDistance > 46;
+    pullStartY.current = null;
+    setPullDistance(0);
+    if (shouldToggle) toggleFocusMode();
+  }
+
   return (
     <section className={`timer-screen mode-${timer.mode} focus-${focusMode}`}>
       <MotionLight />
-      <button className="pull-cord" onClick={toggleFocusMode} aria-label="Pull to switch Bird View and Pixel View">
+      <button
+        className="pull-cord"
+        onPointerDown={startPull}
+        onPointerMove={movePull}
+        onPointerUp={endPull}
+        onPointerCancel={endPull}
+        onTouchStart={startTouchPull}
+        onTouchMove={moveTouchPull}
+        onTouchEnd={endTouchPull}
+        onTouchCancel={endTouchPull}
+        style={{ "--pull": `${pullDistance}px` } as CSSProperties & Record<"--pull", string>}
+        aria-label="Pull down to switch Bird View and Pixel View"
+      >
         <span className="cord-line" />
         <span className="cord-handle" />
         <small>{focusMode === "pixel" ? "Pixel" : "Bird"}</small>
@@ -53,10 +107,6 @@ export function TimerScreen({ appState, onOpenSettings, setAppState, timer }: Pr
           {dots.map((active, index) => (
             <span key={index} className={active ? "filled" : ""} />
           ))}
-        </div>
-        <div className="next-phase">
-          <span>Next: {nextLabel}</span>
-          <strong>{formatClock(timer.mode === "empty" ? timer.activePreset.workSeconds : timer.activePreset.restSeconds)}</strong>
         </div>
         <div className="controls">
           <button className="primary-control" onClick={timer.status === "running" ? timer.pause : timer.start}>
@@ -71,30 +121,8 @@ export function TimerScreen({ appState, onOpenSettings, setAppState, timer }: Pr
             {timer.status === "idle" ? <Square size={18} /> : <RotateCcw size={20} />}
             Reset
           </button>
-          <button onClick={onOpenSettings}>
-            <Settings size={19} />
-            Edit
-          </button>
         </div>
       </section>
-
-      <section className="today-grid" aria-label="Today statistics">
-        <Metric label="Today Focused" value={formatDuration(today.focusedSeconds)} unit="hrs" />
-        <Metric label="Pulses" value={String(today.pulses)} unit="count" />
-        <Metric label="Empty Spaces" value={String(today.emptySpaces)} unit="count" />
-        <Metric label="Pixel Blocks" value={String(today.pixelBlocks)} unit="count" />
-        <Metric label="Session" value={`${Math.max(1, today.sessions)} / 4`} unit="cycles" />
-      </section>
     </section>
-  );
-}
-
-function Metric({ label, value, unit }: { label: string; value: string; unit: string }) {
-  return (
-    <div className="metric">
-      <span>{label}</span>
-      <strong>{value}</strong>
-      <small>{unit}</small>
-    </div>
   );
 }

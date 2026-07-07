@@ -35,10 +35,14 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100dvh;
+  overflow: hidden;
+  overscroll-behavior: none;
   background:
     radial-gradient(circle at 50% 4%, rgba(255, 255, 255, 0.045), transparent 28rem),
     linear-gradient(180deg, rgba(255, 255, 255, 0.025), transparent 12rem),
     var(--bg);
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 button,
@@ -61,17 +65,20 @@ select:focus-visible {
 
 .app {
   width: min(100%, 1180px);
+  height: 100dvh;
   margin: 0 auto;
-  padding: 40px 28px 36px;
+  overflow: hidden;
+  padding: 24px 28px 20px;
 }
 
 .topbar {
-  min-height: 76px;
-  border-bottom: 1px solid var(--border);
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: start;
-  gap: 24px;
+  position: absolute;
+  top: max(18px, env(safe-area-inset-top));
+  left: clamp(18px, 5vw, 40px);
+  z-index: 5;
+  border-bottom: 0;
+  min-height: auto;
+  pointer-events: none;
 }
 
 .brand {
@@ -155,8 +162,10 @@ select:focus-visible {
 .timer-screen {
   position: relative;
   overflow: hidden;
-  min-height: calc(100dvh - 116px);
-  padding: 0 0 34px;
+  height: 100dvh;
+  min-height: 0;
+  padding: 0;
+  touch-action: none;
 }
 
 .timer-screen.focus-pixel {
@@ -338,8 +347,9 @@ select:focus-visible {
 .timer-ritual {
   position: relative;
   z-index: 2;
-  min-height: min(670px, calc(100dvh - 116px));
-  padding-top: 128px;
+  height: 100dvh;
+  min-height: 0;
+  padding: max(94px, env(safe-area-inset-top) + 64px) 16px max(20px, env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -351,12 +361,13 @@ select:focus-visible {
 }
 
 .pull-cord {
-  position: absolute;
+  --pull: 0px;
+  position: fixed;
   top: 0;
-  right: clamp(14px, 4vw, 54px);
+  right: max(8px, env(safe-area-inset-right));
   z-index: 4;
   width: 58px;
-  height: 220px;
+  height: 214px;
   border: 0;
   background: transparent;
   color: var(--muted);
@@ -364,15 +375,17 @@ select:focus-visible {
   justify-items: center;
   align-content: start;
   padding: 0;
-  touch-action: manipulation;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .cord-line {
   width: 1px;
-  height: 148px;
+  height: calc(148px + var(--pull));
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0.08));
   transform-origin: top center;
-  transition: transform 360ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: height 180ms cubic-bezier(0.2, 0.8, 0.2, 1), transform 360ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .cord-handle {
@@ -385,6 +398,7 @@ select:focus-visible {
     rgba(12, 12, 12, 0.86);
   box-shadow: 0 0 20px rgba(255, 245, 220, 0.08);
   transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
+  transform: translateY(var(--pull));
 }
 
 .pull-cord small {
@@ -405,7 +419,7 @@ select:focus-visible {
 .pull-cord:focus-visible .cord-handle {
   border-color: var(--accent-dim);
   box-shadow: 0 0 22px var(--accent-dim);
-  transform: translateY(10px);
+  transform: translateY(calc(var(--pull) + 10px));
 }
 
 .eyebrow,
@@ -455,13 +469,18 @@ select:focus-visible {
 .mode-empty .mode-title,
 .mode-empty .progress-dots .filled {
   color: rgba(232, 232, 232, 0.8);
+}
+
+.mode-empty .progress-dots .filled {
   background: rgba(232, 232, 232, 0.78);
   box-shadow: 0 0 14px rgba(232, 232, 232, 0.2);
 }
 
-.mode-pixel .mode-title,
-.mode-pixel .progress-dots .filled {
+.mode-pixel .mode-title {
   color: var(--pixel);
+}
+
+.mode-pixel .progress-dots .filled {
   background: var(--pixel);
   box-shadow: 0 0 14px rgba(217, 207, 180, 0.2);
 }
@@ -487,8 +506,8 @@ select:focus-visible {
 }
 
 .next-phase {
+  display: none;
   color: var(--muted);
-  display: grid;
   gap: 12px;
   text-transform: uppercase;
   letter-spacing: 0.18em;
@@ -1093,12 +1112,14 @@ select:focus-visible {
 
 @media (max-width: 860px) {
   .app {
-    padding: max(18px, env(safe-area-inset-top)) 16px 26px;
+    width: 100%;
+    height: 100dvh;
+    padding: 0;
   }
 
   .topbar {
-    grid-template-columns: 1fr;
-    gap: 16px;
+    top: max(16px, env(safe-area-inset-top));
+    left: 24px;
   }
 
   .tabs {
@@ -1111,8 +1132,9 @@ select:focus-visible {
   }
 
   .timer-screen {
-    min-height: calc(100dvh - 156px);
-    padding-bottom: 24px;
+    height: 100dvh;
+    min-height: 0;
+    padding: 0;
   }
 
   .lamp-rig {
@@ -1151,8 +1173,10 @@ select:focus-visible {
   }
 
   .timer-ritual {
-    min-height: min(570px, calc(100dvh - 156px));
-    padding-top: 92px;
+    height: 100dvh;
+    min-height: 0;
+    justify-content: center;
+    padding: max(92px, env(safe-area-inset-top) + 64px) 24px max(16px, env(safe-area-inset-bottom));
   }
 
   .eyebrow {
@@ -1160,16 +1184,12 @@ select:focus-visible {
   }
 
   .controls button {
-    flex: 1 1 140px;
-  }
-
-  .controls button:last-child {
-    flex-basis: 100%;
+    flex: 1 1 138px;
   }
 
   .pull-cord {
-    right: 0;
-    height: 172px;
+    right: 2px;
+    height: 190px;
   }
 
   .cord-line {
@@ -1177,13 +1197,13 @@ select:focus-visible {
   }
 
   .clock {
-    font-size: clamp(72px, 24vw, 112px);
-    margin-top: 28px;
+    font-size: clamp(74px, 23vw, 108px);
+    margin: 24px 0 14px;
   }
 
   .progress-dots {
-    gap: 7px;
-    margin: 30px 0 34px;
+    gap: 6px;
+    margin: 24px 0 28px;
   }
 
   .today-grid,
