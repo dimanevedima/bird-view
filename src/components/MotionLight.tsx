@@ -1,19 +1,4 @@
-import { useEffect, useRef, useState } from "react";
-
-type OrientationEventWithPermission = typeof DeviceOrientationEvent & {
-  requestPermission?: () => Promise<PermissionState>;
-};
-
-type MotionEventWithPermission = typeof DeviceMotionEvent & {
-  requestPermission?: () => Promise<PermissionState>;
-};
-
-type LockableOrientation = ScreenOrientation & {
-  lock?: (orientation: "portrait" | "portrait-primary") => Promise<void>;
-};
-
-const canUseMotion = typeof window !== "undefined" && "DeviceOrientationEvent" in window;
-const canUseDeviceMotion = typeof window !== "undefined" && "DeviceMotionEvent" in window;
+import { useEffect, useRef } from "react";
 
 function setLightVars(angle: number, tiltX: number, tiltY: number) {
   const radians = (angle * Math.PI) / 180;
@@ -23,61 +8,24 @@ function setLightVars(angle: number, tiltX: number, tiltY: number) {
   document.documentElement.style.setProperty("--lamp-drop", `${drop}px`);
   document.documentElement.style.setProperty("--tilt-x", `${tiltX}deg`);
   document.documentElement.style.setProperty("--tilt-y", `${tiltY}deg`);
-  document.documentElement.style.setProperty("--beam-angle", `${angle * 0.86}deg`);
   document.documentElement.style.setProperty("--lamp-angle", `${angle}deg`);
 }
 
+function nextSwing() {
+  return {
+    amplitude: 5.8 + Math.random() * 5.2,
+    period: 1750 + Math.random() * 1900,
+    phase: Math.random() * Math.PI * 2,
+    drift: (Math.random() - 0.5) * 3.5,
+    until: performance.now() + 2600 + Math.random() * 4200,
+  };
+}
+
 export function MotionLight() {
-  const [motionActive, setMotionActive] = useState(false);
-  const askedMotion = useRef(false);
   const target = useRef({ angle: 0, tiltX: 0, tiltY: 0 });
   const physics = useRef({ angle: 0, velocity: 0, tiltX: 0, tiltY: 0 });
+  const swing = useRef(nextSwing());
   const lastWriteAt = useRef(0);
-
-  useEffect(() => {
-    const MotionEvent = DeviceOrientationEvent as OrientationEventWithPermission;
-    const DeviceMotion = DeviceMotionEvent as MotionEventWithPermission;
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduceMotion) return;
-
-    async function askMotionFromGesture() {
-      if (askedMotion.current || !canUseMotion) return;
-      askedMotion.current = true;
-      try {
-        const orientation = screen.orientation as LockableOrientation;
-        await orientation.lock?.("portrait").catch(() => undefined);
-        const orientationPermission = typeof MotionEvent.requestPermission === "function"
-          ? await MotionEvent.requestPermission()
-          : "granted";
-        const motionPermission = typeof DeviceMotion.requestPermission === "function"
-          ? await DeviceMotion.requestPermission()
-          : "granted";
-        if (orientationPermission === "granted" || motionPermission === "granted") {
-          setMotionActive(true);
-          return;
-        }
-        setMotionActive(false);
-      } catch {
-        setMotionActive(false);
-      }
-    }
-
-    function onPointerMove(event: PointerEvent) {
-      if (motionActive) return;
-      target.current = {
-        angle: ((event.clientX / window.innerWidth) - 0.5) * 24,
-        tiltX: ((event.clientX / window.innerWidth) - 0.5) * 3.4,
-        tiltY: -((event.clientY / window.innerHeight) - 0.45) * 2.4,
-      };
-    }
-
-    window.addEventListener("pointerdown", askMotionFromGesture, { once: true, passive: true });
-    window.addEventListener("pointermove", onPointerMove, { passive: true });
-    return () => {
-      window.removeEventListener("pointerdown", askMotionFromGesture);
-      window.removeEventListener("pointermove", onPointerMove);
-    };
-  }, [motionActive]);
 
   useEffect(() => {
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -87,53 +35,40 @@ export function MotionLight() {
     const startedAt = performance.now();
 
     function tick(now: number) {
-      if (!motionActive) {
-        target.current.angle += (Math.sin((now - startedAt) / 1450) * 7.4 - target.current.angle) * 0.018;
+      if (now > swing.current.until) {
+        swing.current = nextSwing();
       }
+
+      const seconds = now - startedAt;
+      const currentSwing = swing.current;
+      const slowArc = Math.sin(seconds / currentSwing.period + currentSwing.phase) * currentSwing.amplitude;
+      const smallUnevenness = Math.sin(seconds / (currentSwing.period * 0.43) + currentSwing.phase * 0.7) * 1.2;
+      const breathingTilt = Math.cos(seconds / (currentSwing.period * 1.15)) * 0.65;
+
+      target.current = {
+        angle: slowArc + smallUnevenness + currentSwing.drift,
+        tiltX: (slowArc + currentSwing.drift) * 0.055,
+        tiltY: breathingTilt,
+      };
+
       const state = physics.current;
-      const pull = (target.current.angle - state.angle) * 0.086;
-      state.velocity = (state.velocity + pull) * 0.885;
+      const pull = (target.current.angle - state.angle) * 0.075;
+      state.velocity = (state.velocity + pull) * 0.925;
       state.angle += state.velocity;
-      state.tiltX += (target.current.tiltX - state.tiltX) * 0.08;
-      state.tiltY += (target.current.tiltY - state.tiltY) * 0.08;
+      state.tiltX += (target.current.tiltX - state.tiltX) * 0.055;
+      state.tiltY += (target.current.tiltY - state.tiltY) * 0.055;
+
       if (now - lastWriteAt.current > 32) {
         lastWriteAt.current = now;
         setLightVars(state.angle, state.tiltX, state.tiltY);
       }
+
       frameId = requestAnimationFrame(tick);
     }
 
     frameId = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frameId);
-  }, [motionActive]);
-
-  useEffect(() => {
-    if (!motionActive) return;
-
-    function onOrientation(event: DeviceOrientationEvent) {
-      const beta = Math.max(-28, Math.min(28, event.beta ?? 0));
-      const gamma = Math.max(-24, Math.min(24, event.gamma ?? 0));
-      target.current = {
-        angle: Math.max(-24, Math.min(24, gamma * 1.25 + beta * 0.09)),
-        tiltX: gamma * 0.09,
-        tiltY: -beta * 0.06,
-      };
-    }
-
-    function onMotion(event: DeviceMotionEvent) {
-      const gravityX = event.accelerationIncludingGravity?.x ?? 0;
-      const accelerationX = event.acceleration?.x ?? 0;
-      const shake = Math.max(-10, Math.min(10, gravityX * 2.1 + accelerationX * 5));
-      target.current.angle = Math.max(-26, Math.min(26, target.current.angle + shake * 0.55));
-    }
-
-    window.addEventListener("deviceorientation", onOrientation, true);
-    window.addEventListener("devicemotion", onMotion, true);
-    return () => {
-      window.removeEventListener("deviceorientation", onOrientation, true);
-      window.removeEventListener("devicemotion", onMotion, true);
-    };
-  }, [motionActive]);
+  }, []);
 
   return (
     <div className="motion-light">
@@ -141,8 +76,8 @@ export function MotionLight() {
         <span className="lamp-cable" />
         <span className="lamp-cap" />
         <span className="lamp-glow" />
+        <span className="light-cone" />
       </div>
-      <div className="light-cone" aria-hidden="true" />
       <div className="light-dust" aria-hidden="true" />
     </div>
   );
