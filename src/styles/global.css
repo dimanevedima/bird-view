@@ -192,11 +192,11 @@ select:focus-visible {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse at 50% 24%, var(--light-core), transparent 15rem),
-    radial-gradient(ellipse at 50% 36%, var(--light-haze), var(--light-wash) 38%, transparent 72%);
-  filter: blur(18px);
+    radial-gradient(ellipse at 50% 20%, var(--light-core), transparent 10rem),
+    radial-gradient(ellipse at 50% 42%, var(--light-haze), var(--light-wash) 31%, transparent 68%);
+  filter: blur(24px);
   mix-blend-mode: screen;
-  opacity: 0.58;
+  opacity: 0.38;
   transition: opacity 240ms ease;
 }
 
@@ -266,19 +266,21 @@ select:focus-visible {
 .light-cone {
   position: absolute;
   left: 50%;
-  top: calc(176px + var(--lamp-drop));
-  width: 88vw;
-  height: min(560px, 68dvh);
+  top: calc(174px + var(--lamp-drop));
+  width: min(780px, 86vw);
+  height: min(620px, 72dvh);
   transform: translateX(calc(-50% + var(--lamp-swing-x))) rotate(var(--beam-angle));
   transform-origin: 50% 0;
   background:
-    radial-gradient(ellipse at 50% 6%, var(--lamp-bulb), transparent 4.8rem),
-    radial-gradient(ellipse at 50% 32%, var(--light-core), var(--light-wash) 42%, transparent 78%);
-  -webkit-mask-image: radial-gradient(ellipse at 50% 18%, #000 0%, rgba(0, 0, 0, 0.88) 18%, rgba(0, 0, 0, 0.38) 52%, transparent 86%);
-  mask-image: radial-gradient(ellipse at 50% 18%, #000 0%, rgba(0, 0, 0, 0.88) 18%, rgba(0, 0, 0, 0.38) 52%, transparent 86%);
-  filter: blur(13px);
+    radial-gradient(ellipse at 50% 2%, var(--lamp-bulb), transparent 4.2rem),
+    radial-gradient(ellipse at 50% 34%, var(--light-core), var(--light-wash) 38%, transparent 76%),
+    linear-gradient(90deg, transparent, var(--light-wash) 48%, var(--light-wash) 52%, transparent);
+  clip-path: polygon(47.5% 0, 52.5% 0, 83% 100%, 17% 100%);
+  -webkit-mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.92), rgba(0, 0, 0, 0.72) 42%, rgba(0, 0, 0, 0.32) 70%, transparent 100%);
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.92), rgba(0, 0, 0, 0.72) 42%, rgba(0, 0, 0, 0.32) 70%, transparent 100%);
+  filter: blur(18px);
   mix-blend-mode: screen;
-  opacity: 0.7;
+  opacity: 0.76;
   transition: none;
   will-change: transform;
 }
@@ -1195,10 +1197,10 @@ select:focus-visible {
   }
 
   .light-cone {
-    top: calc(158px + var(--lamp-drop));
-    width: 122vw;
-    height: min(520px, 66dvh);
-    opacity: 0.58;
+    top: calc(156px + var(--lamp-drop));
+    width: 118vw;
+    height: min(540px, 68dvh);
+    opacity: 0.64;
   }
 
   .light-dust {

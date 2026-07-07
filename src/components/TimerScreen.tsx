@@ -26,7 +26,7 @@ export function TimerScreen({ appState, onOpenSettings, setAppState, timer }: Pr
 
   function toggleFocusMode() {
     const nextFocusMode = focusMode === "pixel" ? "bird" : "pixel";
-    const nextPreset = nextFocusMode === "pixel" ? pixelPresets[0] : birdPresets[1];
+    const nextPreset = nextFocusMode === "pixel" ? pixelPresets[0] : birdPresets[0];
     setAppState((state) => ({
       ...state,
       settings: {
