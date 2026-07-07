@@ -20,6 +20,7 @@ export function TimerScreen({ appState, onOpenSettings, setAppState, timer }: Pr
   const focusMode = appState.settings.focusMode ?? "bird";
   const pullStartY = useRef<number | null>(null);
   const [pullDistance, setPullDistance] = useState(0);
+  const [isPulling, setIsPulling] = useState(false);
   const dots = Array.from({ length: 24 }, (_, index) => index < Math.round(timer.progress * 24));
   const modeLabel = timer.mode === "bird" ? "Work Pulse" : timer.mode === "empty" ? "Empty Space" : "Pixel Block";
 
@@ -39,6 +40,7 @@ export function TimerScreen({ appState, onOpenSettings, setAppState, timer }: Pr
 
   function startPull(event: PointerEvent<HTMLButtonElement>) {
     pullStartY.current = event.clientY;
+    setIsPulling(true);
     event.currentTarget.setPointerCapture(event.pointerId);
   }
 
@@ -54,12 +56,17 @@ export function TimerScreen({ appState, onOpenSettings, setAppState, timer }: Pr
     event.preventDefault();
     const shouldToggle = pullDistance > 46;
     pullStartY.current = null;
+    setIsPulling(false);
     setPullDistance(0);
-    if (shouldToggle) toggleFocusMode();
+    if (shouldToggle) {
+      navigator.vibrate?.(18);
+      toggleFocusMode();
+    }
   }
 
   function startTouchPull(event: TouchEvent<HTMLButtonElement>) {
     pullStartY.current = event.touches[0]?.clientY ?? null;
+    setIsPulling(true);
   }
 
   function moveTouchPull(event: TouchEvent<HTMLButtonElement>) {
@@ -75,8 +82,12 @@ export function TimerScreen({ appState, onOpenSettings, setAppState, timer }: Pr
     event.preventDefault();
     const shouldToggle = pullDistance > 46;
     pullStartY.current = null;
+    setIsPulling(false);
     setPullDistance(0);
-    if (shouldToggle) toggleFocusMode();
+    if (shouldToggle) {
+      navigator.vibrate?.(18);
+      toggleFocusMode();
+    }
   }
 
   return (
@@ -86,7 +97,7 @@ export function TimerScreen({ appState, onOpenSettings, setAppState, timer }: Pr
         <Settings size={18} />
       </button>
       <button
-        className="pull-cord"
+        className={isPulling ? "pull-cord is-pulling" : "pull-cord"}
         onPointerDown={startPull}
         onPointerMove={movePull}
         onPointerUp={endPull}

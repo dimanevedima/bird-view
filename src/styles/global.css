@@ -211,7 +211,7 @@ select:focus-visible {
   height: 224px;
   transform: translateX(-50%) rotate(var(--lamp-angle));
   transform-origin: 50% 0;
-  transition: left 110ms linear, top 110ms linear, transform 110ms linear;
+  transition: none;
 }
 
 .lamp-cable {
@@ -282,7 +282,7 @@ select:focus-visible {
   filter: blur(16px);
   mix-blend-mode: screen;
   opacity: 0.82;
-  transition: left 180ms ease-out, transform 180ms ease-out;
+  transition: none;
 }
 
 .light-dust {
@@ -402,8 +402,8 @@ select:focus-visible {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0.08));
   transform-origin: top center;
   transition:
-    height 340ms cubic-bezier(0.18, 0.9, 0.24, 1.18),
-    transform 420ms cubic-bezier(0.18, 0.9, 0.24, 1.12);
+    height 520ms cubic-bezier(0.16, 1, 0.22, 1.16),
+    transform 520ms cubic-bezier(0.16, 1, 0.22, 1.12);
 }
 
 .cord-handle {
@@ -416,10 +416,15 @@ select:focus-visible {
     rgba(12, 12, 12, 0.86);
   box-shadow: 0 0 20px rgba(255, 245, 220, 0.08);
   transition:
-    transform 340ms cubic-bezier(0.18, 0.9, 0.24, 1.18),
+    transform 520ms cubic-bezier(0.16, 1, 0.22, 1.16),
     border-color 220ms ease,
     box-shadow 220ms ease;
   transform: translateY(var(--pull));
+}
+
+.pull-cord.is-pulling .cord-line,
+.pull-cord.is-pulling .cord-handle {
+  transition: border-color 120ms ease, box-shadow 120ms ease;
 }
 
 .pull-cord small {
@@ -440,7 +445,18 @@ select:focus-visible {
 .pull-cord:focus-visible .cord-handle {
   border-color: var(--accent-dim);
   box-shadow: 0 0 22px var(--accent-dim);
-  transform: translateY(calc(var(--pull) + 10px));
+}
+
+.pull-cord.is-pulling .cord-line,
+.pull-cord.is-pulling:hover .cord-line,
+.pull-cord.is-pulling:focus-visible .cord-line {
+  transform: rotate(1.5deg);
+}
+
+.pull-cord.is-pulling .cord-handle,
+.pull-cord.is-pulling:hover .cord-handle,
+.pull-cord.is-pulling:focus-visible .cord-handle {
+  transform: translateY(var(--pull));
 }
 
 .eyebrow,
@@ -1215,7 +1231,7 @@ select:focus-visible {
   }
 
   .cord-line {
-    height: 110px;
+    height: calc(110px + var(--pull));
   }
 
   .clock {
