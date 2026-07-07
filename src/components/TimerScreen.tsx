@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import type { CSSProperties, Dispatch, PointerEvent, SetStateAction, TouchEvent } from "react";
-import { Pause, Play, RotateCcw, SkipForward, Square } from "lucide-react";
+import { Pause, Play, RotateCcw, Settings, SkipForward, Square } from "lucide-react";
 import { birdPresets, pixelPresets } from "../data/presets";
 import { MotionLight } from "./MotionLight";
 import type { AppState } from "../types";
@@ -16,7 +16,7 @@ type Props = {
   timer: TimerApi;
 };
 
-export function TimerScreen({ appState, setAppState, timer }: Props) {
+export function TimerScreen({ appState, onOpenSettings, setAppState, timer }: Props) {
   const focusMode = appState.settings.focusMode ?? "bird";
   const pullStartY = useRef<number | null>(null);
   const [pullDistance, setPullDistance] = useState(0);
@@ -82,6 +82,9 @@ export function TimerScreen({ appState, setAppState, timer }: Props) {
   return (
     <section className={`timer-screen mode-${timer.mode} focus-${focusMode}`}>
       <MotionLight />
+      <button className="quiet-settings" onClick={onOpenSettings} aria-label="Open timer settings">
+        <Settings size={18} />
+      </button>
       <button
         className="pull-cord"
         onPointerDown={startPull}

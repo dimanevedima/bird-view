@@ -16,7 +16,8 @@
   --light-wash: rgba(255, 248, 226, 0.1);
   --lamp-bulb: rgba(232, 255, 249, 0.86);
   --lamp-x: 50%;
-  --lamp-y: 15%;
+  --lamp-drop: 0px;
+  --lamp-angle: 0deg;
   --tilt-x: 0deg;
   --tilt-y: 0deg;
   --beam-angle: 0deg;
@@ -204,14 +205,13 @@ select:focus-visible {
 
 .lamp-rig {
   position: absolute;
-  top: -48px;
+  top: calc(18px + var(--lamp-drop));
   left: var(--lamp-x);
-  width: 180px;
-  height: 178px;
-  transform: translateX(-50%) rotate(var(--beam-angle));
+  width: 190px;
+  height: 224px;
+  transform: translateX(-50%) rotate(var(--lamp-angle));
   transform-origin: 50% 0;
-  transition: left 180ms ease-out, transform 180ms ease-out;
-  animation: lampSwing 5.8s ease-in-out infinite alternate;
+  transition: left 110ms linear, top 110ms linear, transform 110ms linear;
 }
 
 .lamp-cable {
@@ -219,14 +219,14 @@ select:focus-visible {
   left: 50%;
   top: 0;
   width: 1px;
-  height: 92px;
+  height: 136px;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.26));
 }
 
 .lamp-cap {
   position: absolute;
   left: 50%;
-  top: 82px;
+  top: 126px;
   width: 138px;
   height: 58px;
   border-radius: 72px 72px 10px 10px;
@@ -257,7 +257,7 @@ select:focus-visible {
 .lamp-glow {
   position: absolute;
   left: 50%;
-  top: 116px;
+  top: 160px;
   width: 210px;
   height: 76px;
   transform: translateX(-50%);
@@ -268,7 +268,7 @@ select:focus-visible {
 .light-cone {
   position: absolute;
   left: calc(var(--lamp-x) - 44vw);
-  top: 74px;
+  top: calc(176px + var(--lamp-drop));
   width: 88vw;
   height: min(560px, 68dvh);
   transform: rotate(var(--beam-angle));
@@ -326,15 +326,6 @@ select:focus-visible {
   border-color: var(--accent-dim);
 }
 
-@keyframes lampSwing {
-  from {
-    rotate: -0.5deg;
-  }
-  to {
-    rotate: 0.8deg;
-  }
-}
-
 @keyframes dustDrift {
   from {
     background-position: 0 0, 0 0;
@@ -358,6 +349,31 @@ select:focus-visible {
   transform: perspective(900px) rotateX(var(--tilt-y)) rotateY(var(--tilt-x));
   transform-style: preserve-3d;
   transition: transform 160ms ease-out;
+}
+
+.quiet-settings {
+  position: fixed;
+  right: max(66px, calc(env(safe-area-inset-right) + 66px));
+  top: max(16px, env(safe-area-inset-top));
+  z-index: 6;
+  width: 46px;
+  height: 46px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  background: rgba(8, 8, 8, 0.32);
+  color: rgba(232, 232, 232, 0.36);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(8px);
+  touch-action: manipulation;
+}
+
+.quiet-settings:hover,
+.quiet-settings:focus-visible {
+  color: var(--accent);
+  border-color: var(--accent-dim);
+  background: rgba(12, 12, 12, 0.58);
 }
 
 .pull-cord {
@@ -385,7 +401,9 @@ select:focus-visible {
   height: calc(148px + var(--pull));
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0.08));
   transform-origin: top center;
-  transition: height 180ms cubic-bezier(0.2, 0.8, 0.2, 1), transform 360ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition:
+    height 340ms cubic-bezier(0.18, 0.9, 0.24, 1.18),
+    transform 420ms cubic-bezier(0.18, 0.9, 0.24, 1.12);
 }
 
 .cord-handle {
@@ -397,7 +415,10 @@ select:focus-visible {
     radial-gradient(circle at 45% 38%, rgba(255, 255, 255, 0.22), transparent 30%),
     rgba(12, 12, 12, 0.86);
   box-shadow: 0 0 20px rgba(255, 245, 220, 0.08);
-  transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
+  transition:
+    transform 340ms cubic-bezier(0.18, 0.9, 0.24, 1.18),
+    border-color 220ms ease,
+    box-shadow 220ms ease;
   transform: translateY(var(--pull));
 }
 
@@ -1138,27 +1159,28 @@ select:focus-visible {
   }
 
   .lamp-rig {
-    width: 148px;
-    height: 150px;
+    top: calc(24px + var(--lamp-drop));
+    width: 154px;
+    height: 204px;
   }
 
   .lamp-cable {
-    height: 70px;
+    height: 120px;
   }
 
   .lamp-cap {
-    top: 62px;
+    top: 110px;
     width: 118px;
     height: 48px;
   }
 
   .lamp-glow {
-    top: 94px;
+    top: 140px;
     width: 180px;
   }
 
   .light-cone {
-    top: 88px;
+    top: calc(158px + var(--lamp-drop));
     width: 122vw;
     left: calc(var(--lamp-x) - 61vw);
     height: min(520px, 66dvh);
