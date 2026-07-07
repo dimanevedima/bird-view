@@ -27,7 +27,7 @@ body {
   min-width: 320px;
   min-height: 100dvh;
   background:
-    radial-gradient(circle at 50% 8%, rgba(255, 255, 255, 0.08), transparent 30rem),
+    radial-gradient(circle at 50% 4%, rgba(255, 255, 255, 0.045), transparent 28rem),
     linear-gradient(180deg, rgba(255, 255, 255, 0.025), transparent 12rem),
     var(--bg);
 }
@@ -126,61 +126,32 @@ input:focus-visible {
 .timer-screen {
   position: relative;
   overflow: hidden;
-  padding: 56px 0 0;
+  min-height: calc(100dvh - 116px);
+  padding: 0 0 34px;
 }
 
-.spotlight {
+.lamp-scene {
   position: absolute;
-  inset: 0 0 auto;
-  height: 560px;
+  inset: -106px 0 auto;
+  z-index: 0;
+  height: 620px;
   pointer-events: none;
-  background:
-    radial-gradient(ellipse at 50% 12%, rgba(255, 255, 255, 0.2) 0%, rgba(255, 245, 220, 0.1) 17%, rgba(255, 255, 255, 0.025) 44%, transparent 70%),
-    radial-gradient(ellipse at 50% 38%, rgba(143, 231, 216, 0.065), transparent 27rem);
-  filter: blur(0.2px);
+  opacity: 0.92;
+  -webkit-mask-image: radial-gradient(ellipse at 50% 43%, #000 0%, #000 42%, transparent 76%);
+  mask-image: radial-gradient(ellipse at 50% 43%, #000 0%, #000 42%, transparent 76%);
 }
 
-.lamp {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  z-index: 1;
-  width: 156px;
-  height: 74px;
-  transform: translateX(-50%);
-  border-radius: 0 0 96px 96px;
-  background:
-    linear-gradient(180deg, transparent 0 24px, rgba(0, 0, 0, 0.9) 24px 72px),
-    radial-gradient(ellipse at 50% 80%, rgba(255, 245, 220, 0.8), transparent 54%);
-  box-shadow: 0 30px 58px rgba(255, 245, 220, 0.14);
-}
-
-.lamp::before {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: -90px;
-  width: 2px;
-  height: 98px;
-  background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.3));
-}
-
-.lamp::after {
-  content: "";
-  position: absolute;
-  left: 22px;
-  right: 22px;
-  bottom: 6px;
-  height: 8px;
-  border-radius: 999px;
-  background: rgba(255, 245, 220, 0.82);
-  box-shadow: 0 0 36px rgba(255, 245, 220, 0.7);
+.lamp-scene canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
 .timer-ritual {
   position: relative;
   z-index: 2;
-  min-height: 590px;
+  min-height: min(670px, calc(100dvh - 116px));
+  padding-top: 128px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -204,7 +175,7 @@ input:focus-visible {
 }
 
 .clock {
-  margin: 36px 0 18px;
+  margin: 34px 0 18px;
   color: rgba(232, 232, 232, 0.9);
   font-size: clamp(76px, 14vw, 158px);
   font-weight: 300;
@@ -276,7 +247,7 @@ input:focus-visible {
 }
 
 .controls {
-  margin-top: 48px;
+  margin-top: 46px;
 }
 
 .controls button,
@@ -308,13 +279,6 @@ input:focus-visible {
   border-color: var(--accent-dim);
   color: var(--accent);
   box-shadow: inset 0 0 18px rgba(143, 231, 216, 0.06), 0 0 24px rgba(143, 231, 216, 0.08);
-}
-
-.presets {
-  position: relative;
-  z-index: 2;
-  border-top: 1px solid var(--border);
-  padding: 32px 0 0;
 }
 
 .preset {
@@ -350,63 +314,21 @@ input:focus-visible {
   text-transform: uppercase;
 }
 
-.thought-line {
-  position: relative;
-  z-index: 2;
-  width: min(100%, 940px);
-  margin: 42px auto 0;
-  padding: 42px 0;
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
-  display: grid;
-  grid-template-columns: 180px 1fr;
-  gap: 46px;
-  align-items: center;
-}
-
-.dot-grid {
-  display: grid;
-  grid-template-columns: repeat(8, 8px);
-  gap: 14px;
-}
-
-.dot-grid span {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: rgba(143, 231, 216, 0.38);
-}
-
-.thought-line p {
-  margin: 0 0 16px;
-  color: var(--accent);
-  letter-spacing: 0.28em;
-  text-transform: uppercase;
-}
-
-.thought-line h2 {
-  margin: 0;
-  color: rgba(232, 232, 232, 0.78);
-  font-size: clamp(20px, 3vw, 28px);
-  font-weight: 400;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
-}
-
 .today-grid {
   width: min(100%, 1100px);
-  margin: 30px auto 0;
+  margin: 4px auto 0;
+  border-top: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
   display: grid;
   grid-template-columns: repeat(5, 1fr);
 }
 
 .metric {
-  min-height: 134px;
+  min-height: 116px;
   border-right: 1px solid var(--border);
-  padding: 26px 24px;
+  padding: 22px 24px;
   display: grid;
-  gap: 10px;
+  gap: 8px;
 }
 
 .metric:last-child {
@@ -739,7 +661,7 @@ input:focus-visible {
 
 @media (max-width: 860px) {
   .app {
-    padding: 24px 16px 28px;
+    padding: max(18px, env(safe-area-inset-top)) 16px 26px;
   }
 
   .topbar {
@@ -757,16 +679,19 @@ input:focus-visible {
   }
 
   .timer-screen {
-    padding-top: 30px;
+    min-height: calc(100dvh - 156px);
+    padding-bottom: 24px;
   }
 
-  .lamp {
-    width: 122px;
-    height: 58px;
+  .lamp-scene {
+    inset: -92px -28px auto;
+    height: 486px;
+    opacity: 0.88;
   }
 
   .timer-ritual {
-    min-height: 500px;
+    min-height: min(570px, calc(100dvh - 156px));
+    padding-top: 92px;
   }
 
   .eyebrow {
@@ -777,9 +702,14 @@ input:focus-visible {
     flex: 1 1 140px;
   }
 
-  .thought-line {
-    grid-template-columns: 1fr;
-    gap: 28px;
+  .clock {
+    font-size: clamp(72px, 24vw, 112px);
+    margin-top: 28px;
+  }
+
+  .progress-dots {
+    gap: 7px;
+    margin: 30px 0 34px;
   }
 
   .today-grid,
@@ -793,8 +723,14 @@ input:focus-visible {
   }
 
   .metric {
+    min-height: 92px;
     border-right: 0;
     border-top: 1px solid var(--border);
+    padding: 18px 20px;
+  }
+
+  .metric strong {
+    font-size: 24px;
   }
 
   .heatmap-panel {

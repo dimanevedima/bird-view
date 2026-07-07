@@ -1,7 +1,5 @@
 import { Pause, Play, RotateCcw, SkipForward, Square } from "lucide-react";
-import type { Dispatch, SetStateAction } from "react";
-import { thoughts } from "../data/thoughts";
-import { presets } from "../data/presets";
+import { LampScene } from "./LampScene";
 import type { AppState } from "../types";
 import { getTodayStats } from "../utils/stats";
 import { formatClock, formatDuration } from "../utils/time";
@@ -10,22 +8,18 @@ type TimerApi = ReturnType<typeof import("../hooks/useTimer").useTimer>;
 
 type Props = {
   appState: AppState;
-  setAppState: Dispatch<SetStateAction<AppState>>;
   timer: TimerApi;
 };
 
-export function TimerScreen({ appState, setAppState, timer }: Props) {
+export function TimerScreen({ appState, timer }: Props) {
   const today = getTodayStats(appState.sessions);
-  const modeThoughts = thoughts[timer.mode];
-  const thoughtIndex = Math.floor(timer.progress * modeThoughts.length) % modeThoughts.length;
   const dots = Array.from({ length: 24 }, (_, index) => index < Math.round(timer.progress * 24));
   const modeLabel = timer.mode === "bird" ? "Work Pulse" : timer.mode === "empty" ? "Empty Space" : "Pixel View";
   const nextLabel = timer.mode === "empty" ? timer.activePreset.mode === "pixel" ? "Pixel View" : "Bird View" : "Empty Space";
 
   return (
     <section className={`timer-screen mode-${timer.mode}`}>
-      <div className="lamp" aria-hidden="true" />
-      <div className="spotlight" aria-hidden="true" />
+      <LampScene />
       <section className="timer-ritual" aria-label="Timer">
         <p className="eyebrow">Bird View</p>
         <div className="clock" aria-live="polite">{formatClock(timer.remaining)}</div>
@@ -55,45 +49,6 @@ export function TimerScreen({ appState, setAppState, timer }: Props) {
         </div>
       </section>
 
-      <section className="presets" aria-label="Timer presets">
-        {presets.map((preset) => (
-          <button
-            key={preset.id}
-            className={preset.id === appState.settings.activePresetId ? "preset active" : "preset"}
-            onClick={() =>
-              setAppState((state) => ({
-                ...state,
-                settings: { ...state.settings, activePresetId: preset.id },
-              }))
-            }
-          >
-            {preset.label}
-          </button>
-        ))}
-      </section>
-
-      <label className="tiny-task">
-        <span>Tiny Task</span>
-        <input
-          value={appState.currentTask}
-          onChange={(event) => setAppState((state) => ({ ...state, currentTask: event.target.value }))}
-          placeholder="Finish intro"
-        />
-      </label>
-
-      <section className="thought-line">
-        <div className="dot-grid" aria-hidden="true">
-          {Array.from({ length: 64 }, (_, index) => (
-            <span key={index} />
-          ))}
-        </div>
-        <div>
-          <p>{timer.mode === "empty" ? "Empty Space" : "Bird View"}</p>
-          <h2>{modeThoughts[thoughtIndex]}</h2>
-          <h2>{thoughts[timer.mode][(thoughtIndex + 1) % modeThoughts.length]}</h2>
-        </div>
-      </section>
-
       <section className="today-grid" aria-label="Today statistics">
         <Metric label="Today Focused" value={formatDuration(today.focusedSeconds)} unit="hrs" />
         <Metric label="Pulses" value={String(today.pulses)} unit="count" />
@@ -101,7 +56,6 @@ export function TimerScreen({ appState, setAppState, timer }: Props) {
         <Metric label="Pixel Blocks" value={String(today.pixelBlocks)} unit="count" />
         <Metric label="Session" value={`${Math.max(1, today.sessions)} / 4`} unit="cycles" />
       </section>
-      <footer className="page-mantra">Pause is part of the work</footer>
     </section>
   );
 }

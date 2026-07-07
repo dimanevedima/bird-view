@@ -26,7 +26,7 @@ export default function App() {
   return (
     <AppShell activeTab={activeTab} onTabChange={setActiveTab}>
       {activeTab === "timer" ? (
-        <TimerScreen appState={stableState} setAppState={setAppState} timer={timer} />
+        <TimerScreen appState={stableState} timer={timer} />
       ) : (
         <StatsScreen sessions={stableState.sessions} />
       )}
