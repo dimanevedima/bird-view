@@ -145,14 +145,14 @@ export function useTimer({ appState, setAppState }: TimerControls) {
   useEffect(() => {
     if (status !== "running") return;
     const intervalId = window.setInterval(() => {
-      setRemaining((seconds) => {
-        if (seconds > 1) return seconds - 1;
-        completePhase();
-        return 1;
-      });
+      setRemaining((seconds) => Math.max(0, seconds - 1));
     }, 1000);
     return () => window.clearInterval(intervalId);
-  }, [status, mode, activePreset]);
+  }, [status]);
+
+  useEffect(() => {
+    if (status === "running" && remaining <= 0) completePhase();
+  }, [status, remaining]);
 
   const duration = durationFor(mode, activePreset);
   const progress = duration ? 1 - remaining / duration : 0;
