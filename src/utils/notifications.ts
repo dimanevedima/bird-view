@@ -45,10 +45,8 @@ export function notifyPhaseComplete(justEnded: TimerMode, nextMode: TimerMode) {
   void send(title, `Next up: ${phaseLabel(nextMode)}`);
 }
 
-export function notifyCatchUp(workCount: number, restCount: number, nextMode: TimerMode) {
-  const parts: string[] = [];
-  if (workCount) parts.push(`${workCount} focus block${workCount > 1 ? "s" : ""}`);
-  if (restCount) parts.push(`${restCount} empty space${restCount > 1 ? "s" : ""}`);
-  if (!parts.length) return;
-  void send("While you were away", `${parts.join(" and ")} finished. Next: ${phaseLabel(nextMode)}`);
+export function notifyCatchUp(workCount: number, nextMode: TimerMode) {
+  if (!workCount) return;
+  const label = `${workCount} focus block${workCount > 1 ? "s" : ""}`;
+  void send("While you were away", `${label} finished. Next: ${phaseLabel(nextMode)}`);
 }

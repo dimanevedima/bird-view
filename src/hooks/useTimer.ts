@@ -125,8 +125,7 @@ export function useTimer({ appState, setAppState }: TimerControls) {
         appendSegments(hydrated.completedSegments);
         if (appState.settings.notificationsEnabled) {
           const workCount = hydrated.completedSegments.filter((seg) => seg.mode !== "empty").length;
-          const restCount = hydrated.completedSegments.filter((seg) => seg.mode === "empty").length;
-          notifyCatchUp(workCount, restCount, hydrated.mode);
+          notifyCatchUp(workCount, hydrated.mode);
         }
       }
     }
@@ -178,13 +177,14 @@ export function useTimer({ appState, setAppState }: TimerControls) {
   }
 
   function appendSegments(completed: CompletedSegment[]) {
-    if (!completed.length) return;
+    const workSegments = completed.filter((segment) => segment.mode !== "empty");
+    if (!workSegments.length) return;
     const sessionId = ensureSession();
     setAppState((state) => ({
       ...state,
       segments: [
         ...state.segments,
-        ...completed.map((segment) => ({
+        ...workSegments.map((segment) => ({
           id: createId(),
           sessionId,
           mode: segment.mode,
