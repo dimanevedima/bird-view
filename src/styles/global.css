@@ -182,6 +182,17 @@ select:focus-visible {
   --lamp-bulb: rgba(255, 232, 172, 0.92);
 }
 
+.empty-light {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 50% 24%, rgba(255, 255, 255, 0.08), transparent 26%),
+    radial-gradient(ellipse at 50% 54%, rgba(255, 255, 255, 0.035), transparent 44%),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.78), transparent 36%, transparent 64%, rgba(0, 0, 0, 0.78));
+}
+
 .motion-light {
   position: absolute;
   inset: 0;
@@ -1384,6 +1395,48 @@ select:focus-visible {
   gap: 6px;
   font-size: 12px;
   letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.crash-fallback {
+  width: 100%;
+  height: 100dvh;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 18px;
+  background:
+    radial-gradient(ellipse at 50% 36%, rgba(255, 255, 255, 0.05), transparent 34%),
+    #020202;
+  color: var(--text);
+  text-align: center;
+  padding: 24px;
+}
+
+.crash-fallback p,
+.crash-fallback h1 {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.24em;
+}
+
+.crash-fallback p {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.crash-fallback h1 {
+  font-size: 24px;
+  font-weight: 400;
+}
+
+.crash-fallback button {
+  min-height: 48px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: rgba(16, 16, 16, 0.72);
+  color: var(--accent);
+  padding: 0 22px;
   text-transform: uppercase;
 }
 
