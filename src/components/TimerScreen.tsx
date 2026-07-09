@@ -2,8 +2,9 @@ import { useRef, useState } from "react";
 import type { CSSProperties, Dispatch, PointerEvent, SetStateAction, TouchEvent } from "react";
 import { Pause, Play, RotateCcw, Settings, SkipForward, Square } from "lucide-react";
 import { birdPresets, pixelPresets } from "../data/presets";
+import { IntervalPickerSheet } from "./IntervalPickerSheet";
 import { MotionLight } from "./MotionLight";
-import type { AppState } from "../types";
+import type { AppState, TimerPreset, WorkProfile } from "../types";
 import { playSound } from "../utils/sound";
 import { formatClock } from "../utils/time";
 
@@ -21,8 +22,30 @@ export function TimerScreen({ appState, onOpenSettings, setAppState, timer }: Pr
   const pullStartY = useRef<number | null>(null);
   const [pullDistance, setPullDistance] = useState(0);
   const [isPulling, setIsPulling] = useState(false);
+  const [intervalEditorOpen, setIntervalEditorOpen] = useState(false);
+  const liveCustomIds = useRef<Record<WorkProfile, string | null>>({ bird: null, pixel: null });
   const dots = Array.from({ length: 24 }, (_, index) => index < Math.round(timer.progress * 24));
   const modeLabel = timer.mode === "bird" ? "Work Pulse" : timer.mode === "empty" ? "Empty Space" : "Pixel Block";
+
+  function applyCustomInterval(workSeconds: number, restSeconds: number) {
+    setAppState((state) => {
+      const id = liveCustomIds.current[focusMode] ?? `live-${focusMode}-${Date.now()}`;
+      liveCustomIds.current[focusMode] = id;
+      const preset: TimerPreset = {
+        id,
+        label: `${Math.round(workSeconds / 60)} / ${focusMode === "pixel" ? Math.round(restSeconds / 60) : restSeconds}`,
+        workSeconds,
+        restSeconds,
+        mode: focusMode,
+      };
+      const filtered = (state.customPresets ?? []).filter((existing) => existing.id !== id);
+      return {
+        ...state,
+        settings: { ...state.settings, activePresetId: id },
+        customPresets: [...filtered, preset],
+      };
+    });
+  }
 
   function toggleFocusMode() {
     const nextFocusMode = focusMode === "pixel" ? "bird" : "pixel";
@@ -115,28 +138,46 @@ export function TimerScreen({ appState, onOpenSettings, setAppState, timer }: Pr
       </button>
       <section className="timer-ritual" aria-label="Timer">
         <p className="eyebrow">{focusMode === "pixel" ? "Pixel View" : "Bird View"}</p>
-        <div className="clock" aria-live="polite">{formatClock(timer.remaining)}</div>
+        <button
+          className="clock-trigger"
+          onClick={() => setIntervalEditorOpen(true)}
+          disabled={timer.status !== "idle"}
+          aria-label="Edit interval length"
+        >
+          <span className="clock" aria-live="polite">{formatClock(timer.remaining)}</span>
+        </button>
+        {timer.status === "idle" ? <p className="tap-hint">Tap to edit</p> : null}
         <p className="mode-title">{modeLabel}</p>
         <div className="progress-dots" aria-label={`${Math.round(timer.progress * 100)} percent complete`}>
           {dots.map((active, index) => (
             <span key={index} className={active ? "filled" : ""} />
           ))}
         </div>
-        <div className="controls">
-          <button className="primary-control" onClick={timer.status === "running" ? timer.pause : timer.start}>
-            {timer.status === "running" ? <Pause size={20} /> : <Play size={20} />}
-            {timer.status === "running" ? "Pause" : "Start"}
+        <div className="controls minimal-controls">
+          <button className="ctrl-btn ctrl-ghost" onClick={timer.reset} aria-label="Reset">
+            {timer.status === "idle" ? <Square size={16} /> : <RotateCcw size={18} />}
           </button>
-          <button onClick={timer.skip}>
-            <SkipForward size={20} />
-            Skip
+          <button
+            className="ctrl-btn ctrl-primary"
+            onClick={timer.status === "running" ? timer.pause : timer.start}
+            aria-label={timer.status === "running" ? "Pause" : "Start"}
+          >
+            {timer.status === "running" ? <Pause size={26} /> : <Play size={26} />}
           </button>
-          <button onClick={timer.reset}>
-            {timer.status === "idle" ? <Square size={18} /> : <RotateCcw size={20} />}
-            Reset
+          <button className="ctrl-btn ctrl-ghost" onClick={timer.skip} aria-label="Skip">
+            <SkipForward size={18} />
           </button>
         </div>
       </section>
+      {intervalEditorOpen ? (
+        <IntervalPickerSheet
+          focusMode={focusMode}
+          workSeconds={timer.activePreset.workSeconds}
+          restSeconds={timer.activePreset.restSeconds}
+          onChange={applyCustomInterval}
+          onClose={() => setIntervalEditorOpen(false)}
+        />
+      ) : null}
     </section>
   );
 }

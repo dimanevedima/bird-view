@@ -519,8 +519,31 @@ select:focus-visible {
     0 0 42px rgba(0, 0, 0, 0.85);
 }
 
+.clock-trigger {
+  display: block;
+  margin: 34px auto 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  transition: opacity 200ms ease, transform 200ms ease;
+}
+
+.clock-trigger:not(:disabled):hover,
+.clock-trigger:not(:disabled):focus-visible {
+  transform: scale(1.015);
+}
+
+.clock-trigger:not(:disabled):hover .clock,
+.clock-trigger:not(:disabled):focus-visible .clock {
+  text-shadow: 0 0 42px rgba(255, 245, 220, 0.2), 0 0 30px var(--accent-dim);
+}
+
+.clock-trigger:disabled {
+  cursor: default;
+}
+
 .clock {
-  margin: 34px 0 18px;
+  display: block;
   color: rgba(232, 232, 232, 0.9);
   font-size: clamp(76px, 14vw, 158px);
   font-weight: 300;
@@ -528,6 +551,15 @@ select:focus-visible {
   letter-spacing: 0;
   font-variant-numeric: tabular-nums;
   text-shadow: 0 0 42px rgba(255, 245, 220, 0.2);
+  transition: text-shadow 200ms ease;
+}
+
+.tap-hint {
+  margin: 12px 0 10px;
+  color: var(--muted-2);
+  font-size: 11px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
 }
 
 .mode-title {
@@ -631,6 +663,46 @@ select:focus-visible {
   border-color: var(--accent-dim);
   color: var(--accent);
   box-shadow: inset 0 0 18px rgba(143, 231, 216, 0.06), 0 0 24px rgba(143, 231, 216, 0.08);
+}
+
+.minimal-controls {
+  align-items: center;
+  gap: 22px;
+}
+
+.controls .ctrl-btn {
+  flex: 0 0 auto;
+  min-height: 0;
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  border-radius: 999px;
+  background: rgba(16, 16, 16, 0.5);
+}
+
+.controls .ctrl-primary {
+  width: 78px;
+  height: 78px;
+  border-color: var(--accent-dim);
+  color: var(--accent);
+  background: radial-gradient(circle at 38% 30%, rgba(255, 255, 255, 0.08), transparent 60%), rgba(16, 16, 16, 0.7);
+  box-shadow: inset 0 0 18px rgba(143, 231, 216, 0.08), 0 0 30px rgba(143, 231, 216, 0.14);
+}
+
+.controls .ctrl-primary:hover {
+  box-shadow: inset 0 0 22px rgba(143, 231, 216, 0.12), 0 0 38px rgba(143, 231, 216, 0.22);
+}
+
+.controls .ctrl-ghost {
+  color: var(--muted);
+  border-color: transparent;
+  background: transparent;
+}
+
+.controls .ctrl-ghost:hover {
+  color: var(--text);
+  border-color: var(--border);
+  background: rgba(16, 16, 16, 0.5);
 }
 
 .settings-scrim {
@@ -802,6 +874,187 @@ select:focus-visible {
 
 .preset {
   min-width: 126px;
+}
+
+.dial-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 22;
+  background: rgba(0, 0, 0, 0.7);
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  animation: dialScrimIn 220ms ease;
+}
+
+.dial-sheet {
+  width: min(100%, 400px);
+  border: 1px solid var(--border-strong);
+  border-radius: 16px;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(143, 231, 216, 0.08), transparent 20rem),
+    rgba(10, 10, 10, 0.96);
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.6);
+  padding: 22px 22px 30px;
+  animation: dialSheetIn 260ms cubic-bezier(0.16, 1, 0.22, 1);
+}
+
+@keyframes dialScrimIn {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes dialSheetIn {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.dial-sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.segment-tabs {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.segment-tabs button {
+  min-height: 40px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  text-transform: uppercase;
+  font-size: 13px;
+  letter-spacing: 0.16em;
+  transition: color 180ms ease, border-color 180ms ease, background 180ms ease;
+}
+
+.segment-tabs button.active {
+  color: var(--accent);
+  border-color: var(--accent-dim);
+  background: rgba(143, 231, 216, 0.08);
+}
+
+.dial-sheet .icon-button.confirm {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(16, 16, 16, 0.72);
+  color: var(--accent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dial-sheet .icon-button.confirm:hover {
+  border-color: var(--accent-dim);
+  background: rgba(16, 16, 16, 0.9);
+}
+
+.dial-stage {
+  display: grid;
+  place-items: center;
+  margin: 28px 0 6px;
+}
+
+.duration-dial {
+  position: relative;
+  width: min(70vw, 240px);
+  aspect-ratio: 1;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.duration-dial:focus-visible {
+  outline: none;
+}
+
+.dial-track {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.1);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.dial-progress {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 3;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 8px var(--accent-dim));
+  transition: d 80ms linear;
+}
+
+.dial-tick {
+  stroke: rgba(255, 255, 255, 0.16);
+  stroke-width: 1.5;
+}
+
+.dial-handle {
+  fill: var(--lamp-bulb);
+  filter: drop-shadow(0 0 10px var(--accent-dim));
+}
+
+.is-dragging .dial-handle {
+  fill: var(--accent);
+}
+
+.dial-tick-label {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  color: var(--muted);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+.dial-center {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 2px;
+  pointer-events: none;
+}
+
+.dial-center strong {
+  color: rgba(232, 232, 232, 0.94);
+  font-size: 56px;
+  font-weight: 300;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.dial-center small {
+  color: var(--accent);
+  font-size: 12px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+}
+
+.dial-hint {
+  margin: 18px 0 0;
+  color: var(--muted);
+  text-align: center;
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
 }
 
 .tiny-task {

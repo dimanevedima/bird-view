@@ -5,6 +5,7 @@ import { TimerSettingsPanel } from "./components/TimerSettingsPanel";
 import { TimerScreen } from "./components/TimerScreen";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import { useTimer } from "./hooks/useTimer";
+import { useWakeLock } from "./hooks/useWakeLock";
 import type { AppState } from "./types";
 
 const STORAGE_KEY = "bird-view-timer-state";
@@ -39,6 +40,8 @@ export default function App() {
     [storedState],
   );
   const timer = useTimer({ appState, setAppState });
+
+  useWakeLock(true);
 
   useEffect(() => {
     async function lockPortrait() {

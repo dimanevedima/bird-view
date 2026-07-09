@@ -32,6 +32,44 @@ function durationFor(mode: TimerMode, preset: TimerPreset) {
   return mode === "empty" ? preset.restSeconds : preset.workSeconds;
 }
 
+type CompletionTally = {
+  workSeconds: number;
+  restSeconds: number;
+  birdPulses: number;
+  emptySpaces: number;
+  pixelBlocks: number;
+};
+
+function emptyTally(): CompletionTally {
+  return { workSeconds: 0, restSeconds: 0, birdPulses: 0, emptySpaces: 0, pixelBlocks: 0 };
+}
+
+function tallyIsEmpty(tally: CompletionTally) {
+  return !tally.workSeconds && !tally.restSeconds && !tally.birdPulses && !tally.emptySpaces && !tally.pixelBlocks;
+}
+
+function recordCompletion(mode: TimerMode, preset: TimerPreset, tally: CompletionTally) {
+  if (mode === "empty") {
+    tally.restSeconds += preset.restSeconds;
+    tally.emptySpaces += 1;
+  } else {
+    tally.workSeconds += preset.workSeconds;
+    if (mode === "pixel") tally.pixelBlocks += 1;
+    else tally.birdPulses += 1;
+  }
+}
+
+function applyTally(session: TimerSession, tally: CompletionTally): TimerSession {
+  return {
+    ...session,
+    workSecondsCompleted: session.workSecondsCompleted + tally.workSeconds,
+    restSecondsCompleted: session.restSecondsCompleted + tally.restSeconds,
+    birdPulsesCompleted: session.birdPulsesCompleted + tally.birdPulses,
+    emptySpacesCompleted: session.emptySpacesCompleted + tally.emptySpaces,
+    pixelBlocksCompleted: session.pixelBlocksCompleted + tally.pixelBlocks,
+  };
+}
+
 function hydrateRuntime(runtime: TimerRuntime | null, preset: TimerPreset) {
   if (!runtime || runtime.presetId !== preset.id) {
     return {
@@ -39,15 +77,18 @@ function hydrateRuntime(runtime: TimerRuntime | null, preset: TimerPreset) {
       status: "idle" as TimerStatus,
       remaining: preset.workSeconds,
       sessionId: null,
+      tally: emptyTally(),
     };
   }
 
   let mode = runtime.mode;
   let remaining = Math.max(1, runtime.remaining);
+  const tally = emptyTally();
   if (runtime.status === "running") {
     let elapsed = Math.max(0, Math.floor((Date.now() - runtime.updatedAt) / 1000));
     while (elapsed >= remaining) {
       elapsed -= remaining;
+      recordCompletion(mode, preset, tally);
       mode = nextModeFor(mode, preset);
       remaining = durationFor(mode, preset);
     }
@@ -59,6 +100,7 @@ function hydrateRuntime(runtime: TimerRuntime | null, preset: TimerPreset) {
     status: runtime.status,
     remaining,
     sessionId: runtime.sessionId,
+    tally,
   };
 }
 
@@ -75,12 +117,41 @@ export function useTimer({ appState, setAppState }: TimerControls) {
   const currentSessionId = useRef<string | null>(initialRuntime.sessionId);
 
   useEffect(() => {
-    const runtime = hydrateRuntime(readRuntime(), activePreset);
-    currentSessionId.current = runtime.sessionId;
-    setMode(runtime.mode);
-    setStatus(runtime.status);
-    setRemaining(runtime.remaining);
+    const hydrated = hydrateRuntime(readRuntime(), activePreset);
+    currentSessionId.current = hydrated.sessionId;
+    setMode(hydrated.mode);
+    setStatus(hydrated.status);
+    setRemaining(hydrated.remaining);
+    if (hydrated.sessionId && !tallyIsEmpty(hydrated.tally)) {
+      updateSession((session) => applyTally(session, hydrated.tally));
+    }
   }, [activePreset.id]);
+
+  useEffect(() => {
+    if (status !== "idle") return;
+    setMode(activePreset.mode);
+    setRemaining(durationFor(activePreset.mode, activePreset));
+  }, [status, activePreset.mode, activePreset.workSeconds, activePreset.restSeconds]);
+
+  useEffect(() => {
+    function resyncAfterBackground() {
+      if (document.visibilityState !== "visible") return;
+      const runtime = readRuntime();
+      if (!runtime || runtime.presetId !== activePreset.id || runtime.status !== "running") return;
+      const hydrated = hydrateRuntime(runtime, activePreset);
+      setMode(hydrated.mode);
+      setRemaining(hydrated.remaining);
+      if (!tallyIsEmpty(hydrated.tally)) {
+        updateSession((session) => applyTally(session, hydrated.tally));
+      }
+    }
+    document.addEventListener("visibilitychange", resyncAfterBackground);
+    window.addEventListener("focus", resyncAfterBackground);
+    return () => {
+      document.removeEventListener("visibilitychange", resyncAfterBackground);
+      window.removeEventListener("focus", resyncAfterBackground);
+    };
+  }, [activePreset]);
 
   useEffect(() => {
     writeRuntime({
