@@ -1,5 +1,6 @@
 let cachedDataUrl: string | null = null;
 let audio: HTMLAudioElement | null = null;
+let shouldKeepAlive = false;
 
 function toBase64(bytes: Uint8Array) {
   let binary = "";
@@ -13,7 +14,7 @@ function toBase64(bytes: Uint8Array) {
 function createKeepAliveDataUrl() {
   const sampleRate = 8000;
   const frameCount = sampleRate;
-  const amplitude = 0.0008;
+  const amplitude = 0.003;
   const frequency = 30;
   const buffer = new ArrayBuffer(44 + frameCount * 2);
   const view = new DataView(buffer);
@@ -48,13 +49,17 @@ function ensureAudio() {
   cachedDataUrl ??= createKeepAliveDataUrl();
   audio ??= new Audio(cachedDataUrl);
   audio.loop = true;
+  audio.preload = "auto";
+  audio.volume = 0.08;
   audio.setAttribute("playsinline", "true");
   return audio;
 }
 
 export function startKeepAlive() {
   try {
+    shouldKeepAlive = true;
     const element = ensureAudio();
+    if (element.ended) element.currentTime = 0;
     void element.play().catch(() => undefined);
     if ("mediaSession" in navigator) {
       navigator.mediaSession.metadata = new MediaMetadata({ title: "Bird View", artist: "Timer running" });
@@ -67,6 +72,7 @@ export function startKeepAlive() {
 
 export function stopKeepAlive() {
   try {
+    shouldKeepAlive = false;
     audio?.pause();
     if ("mediaSession" in navigator) {
       navigator.mediaSession.playbackState = "paused";
@@ -75,3 +81,9 @@ export function stopKeepAlive() {
     // ignore
   }
 }
+
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && shouldKeepAlive) {
+    startKeepAlive();
+  }
+});

@@ -5,8 +5,20 @@ type SoundEvent = "click" | "phase" | "toggle" | "preview";
 let audioContext: AudioContext | null = null;
 
 function getAudioContext() {
-  audioContext ??= new AudioContext();
+  const AudioContextConstructor =
+    window.AudioContext ??
+    (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+  if (!AudioContextConstructor) throw new Error("AudioContext is unavailable");
+  audioContext ??= new AudioContextConstructor();
   return audioContext;
+}
+
+async function resumeAudioContext() {
+  const context = getAudioContext();
+  if (context.state === "suspended") {
+    await context.resume();
+  }
+  return context;
 }
 
 function tone(frequency: number, start: number, duration: number, gain: number, type: OscillatorType) {
@@ -47,12 +59,11 @@ function noise(start: number, duration: number, gain: number) {
   source.stop(start + duration);
 }
 
-export function playSound(soundId: SoundId, event: SoundEvent = "click", enabled = true) {
+export async function playSound(soundId: SoundId, event: SoundEvent = "click", enabled = true) {
   if (!enabled) return;
   try {
-    const context = getAudioContext();
+    const context = await resumeAudioContext();
     const now = context.currentTime;
-    if (context.state === "suspended") void context.resume();
 
     const lift = event === "phase" ? 1.18 : event === "toggle" ? 0.86 : 1;
     if (soundId === "soft") {
