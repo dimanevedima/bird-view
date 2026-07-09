@@ -143,7 +143,7 @@ export default function App() {
   const appState = useMemo<AppState>(() => sanitizeAppState(storedState), [storedState]);
   const timer = useTimer({ appState, setAppState });
 
-  useWakeLock(true);
+  useWakeLock(timer.status === "running");
 
   useEffect(() => {
     async function lockPortrait() {

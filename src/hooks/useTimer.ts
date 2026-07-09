@@ -3,6 +3,7 @@ import type { Dispatch, SetStateAction } from "react";
 import { presets } from "../data/presets";
 import type { AppState, TimerMode, TimerPreset, TimerRuntime, TimerSession, TimerStatus } from "../types";
 import { startKeepAlive, stopKeepAlive } from "../utils/backgroundKeepAlive";
+import { startDisplayKeepAwake, stopDisplayKeepAwake } from "../utils/displayKeepAwake";
 import { notifyCatchUp, notifyPhaseComplete } from "../utils/notifications";
 import { playSound } from "../utils/sound";
 
@@ -122,7 +123,10 @@ export function useTimer({ appState, setAppState }: TimerControls) {
     setStatus(hydrated.status);
     setRemaining(hydrated.remaining);
     if (hydrated.completedSegments.length) appendSegments(hydrated.completedSegments);
-    if (hydrated.status === "running") startKeepAlive();
+    if (hydrated.status === "running") {
+      startKeepAlive();
+      startDisplayKeepAwake();
+    }
   }, [activePreset.id]);
 
   useEffect(() => {
@@ -140,6 +144,7 @@ export function useTimer({ appState, setAppState }: TimerControls) {
       setMode(hydrated.mode);
       setRemaining(hydrated.remaining);
       startKeepAlive();
+      startDisplayKeepAwake();
       if (hydrated.completedSegments.length) {
         appendSegments(hydrated.completedSegments);
         if (appState.settings.notificationsEnabled) {
@@ -237,12 +242,14 @@ export function useTimer({ appState, setAppState }: TimerControls) {
   function start() {
     ensureSession();
     setStatus("running");
+    startDisplayKeepAwake();
     startKeepAlive();
     playSound(appState.settings.soundId, "click", appState.settings.soundEnabled);
   }
 
   function pause() {
     setStatus("paused");
+    stopDisplayKeepAwake();
     stopKeepAlive();
     playSound(appState.settings.soundId, "click", appState.settings.soundEnabled);
   }
@@ -255,6 +262,7 @@ export function useTimer({ appState, setAppState }: TimerControls) {
     setStatus("idle");
     setMode(activePreset.mode);
     setRemaining(activePreset.workSeconds);
+    stopDisplayKeepAwake();
     stopKeepAlive();
     if (currentSessionId.current) {
       const id = currentSessionId.current;
