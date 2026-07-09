@@ -8,6 +8,13 @@ import { playSound } from "../utils/sound";
 
 const RUNTIME_KEY = "bird-view-timer-runtime";
 
+function createId() {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return `id-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+}
+
 type TimerControls = {
   appState: AppState;
   setAppState: Dispatch<SetStateAction<AppState>>;
@@ -159,7 +166,7 @@ export function useTimer({ appState, setAppState }: TimerControls) {
 
   function ensureSession() {
     if (currentSessionId.current) return currentSessionId.current;
-    const id = crypto.randomUUID();
+    const id = createId();
     currentSessionId.current = id;
     const session: TimerSession = {
       id,
@@ -178,7 +185,7 @@ export function useTimer({ appState, setAppState }: TimerControls) {
       segments: [
         ...state.segments,
         ...completed.map((segment) => ({
-          id: crypto.randomUUID(),
+          id: createId(),
           sessionId,
           mode: segment.mode,
           startedAt: new Date(segment.startedAt).toISOString(),

@@ -49,25 +49,29 @@ function noise(start: number, duration: number, gain: number) {
 
 export function playSound(soundId: SoundId, event: SoundEvent = "click", enabled = true) {
   if (!enabled) return;
-  const context = getAudioContext();
-  const now = context.currentTime;
-  if (context.state === "suspended") void context.resume();
+  try {
+    const context = getAudioContext();
+    const now = context.currentTime;
+    if (context.state === "suspended") void context.resume();
 
-  const lift = event === "phase" ? 1.18 : event === "toggle" ? 0.86 : 1;
-  if (soundId === "soft") {
-    tone(420 * lift, now, 0.11, 0.035, "sine");
-    tone(640 * lift, now + 0.018, 0.1, 0.018, "sine");
-  }
-  if (soundId === "wood") {
-    noise(now, 0.075, 0.028);
-    tone(185 * lift, now, 0.08, 0.02, "triangle");
-  }
-  if (soundId === "glass") {
-    tone(780 * lift, now, 0.13, 0.024, "sine");
-    tone(1180 * lift, now + 0.012, 0.16, 0.012, "sine");
-  }
-  if (soundId === "tape") {
-    noise(now, 0.12, 0.015);
-    tone(260 * lift, now + 0.016, 0.13, 0.018, "sawtooth");
+    const lift = event === "phase" ? 1.18 : event === "toggle" ? 0.86 : 1;
+    if (soundId === "soft") {
+      tone(420 * lift, now, 0.11, 0.035, "sine");
+      tone(640 * lift, now + 0.018, 0.1, 0.018, "sine");
+    }
+    if (soundId === "wood") {
+      noise(now, 0.075, 0.028);
+      tone(185 * lift, now, 0.08, 0.02, "triangle");
+    }
+    if (soundId === "glass") {
+      tone(780 * lift, now, 0.13, 0.024, "sine");
+      tone(1180 * lift, now + 0.012, 0.16, 0.012, "sine");
+    }
+    if (soundId === "tape") {
+      noise(now, 0.12, 0.015);
+      tone(260 * lift, now + 0.016, 0.13, 0.018, "sawtooth");
+    }
+  } catch {
+    // audio playback is a nice-to-have — never let it break the timer
   }
 }

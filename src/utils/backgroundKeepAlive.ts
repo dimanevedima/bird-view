@@ -53,25 +53,25 @@ function ensureAudio() {
 }
 
 export function startKeepAlive() {
-  const element = ensureAudio();
-  void element.play().catch(() => undefined);
-  if ("mediaSession" in navigator) {
-    try {
+  try {
+    const element = ensureAudio();
+    void element.play().catch(() => undefined);
+    if ("mediaSession" in navigator) {
       navigator.mediaSession.metadata = new MediaMetadata({ title: "Bird View", artist: "Timer running" });
       navigator.mediaSession.playbackState = "playing";
-    } catch {
-      // MediaMetadata unsupported in this browser — non-essential, ignore
     }
+  } catch {
+    // background keep-alive is a best-effort nicety — never let it break the timer
   }
 }
 
 export function stopKeepAlive() {
-  audio?.pause();
-  if ("mediaSession" in navigator) {
-    try {
+  try {
+    audio?.pause();
+    if ("mediaSession" in navigator) {
       navigator.mediaSession.playbackState = "paused";
-    } catch {
-      // ignore
     }
+  } catch {
+    // ignore
   }
 }
