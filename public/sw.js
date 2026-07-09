@@ -1,5 +1,5 @@
 const CACHE_PREFIX = "bird-view-cache-";
-const CACHE_NAME = `${CACHE_PREFIX}2026-07-07-2`;
+const CACHE_NAME = `${CACHE_PREFIX}2026-07-09-1`;
 const APP_SCOPE = "/bird-view/";
 
 self.addEventListener("install", () => {

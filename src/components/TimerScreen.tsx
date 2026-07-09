@@ -39,7 +39,8 @@ export function TimerScreen({ appState, onOpenSettings, onOpenStats, setAppState
         restSeconds,
         mode: focusMode,
       };
-      const filtered = (state.customPresets ?? []).filter((existing) => existing.id !== id);
+      const customPresets = Array.isArray(state.customPresets) ? state.customPresets : [];
+      const filtered = customPresets.filter((existing) => existing.id !== id);
       return {
         ...state,
         settings: { ...state.settings, activePresetId: id },

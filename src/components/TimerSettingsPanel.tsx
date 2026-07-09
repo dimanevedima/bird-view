@@ -22,7 +22,8 @@ const soundOptions: Array<{ id: SoundId; label: string; detail: string }> = [
 export function TimerSettingsPanel({ appState, onClose, setAppState }: Props) {
   const focusMode = appState.settings.focusMode ?? "bird";
   const activePresets = useMemo(() => {
-    const custom = (appState.customPresets ?? []).filter((preset) => preset.mode === focusMode);
+    const customPresets = Array.isArray(appState.customPresets) ? appState.customPresets : [];
+    const custom = customPresets.filter((preset) => preset.mode === focusMode);
     return [...(focusMode === "pixel" ? pixelPresets : birdPresets), ...custom];
   }, [appState.customPresets, focusMode]);
   const [draftMode, setDraftMode] = useState<WorkProfile>(focusMode);
@@ -72,7 +73,7 @@ export function TimerSettingsPanel({ appState, onClose, setAppState }: Props) {
         activePresetId: preset.id,
         focusMode: draftMode,
       },
-      customPresets: [...(state.customPresets ?? []), preset],
+      customPresets: [...(Array.isArray(state.customPresets) ? state.customPresets : []), preset],
     }));
     playSound(appState.settings.soundId, "phase", appState.settings.soundEnabled);
   }

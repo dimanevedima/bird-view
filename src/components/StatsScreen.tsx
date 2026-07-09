@@ -40,7 +40,7 @@ export function StatsScreen({ appState, setAppState, onBack }: Props) {
   const days = useMemo(() => weekDays(weekStart), [weekStart]);
 
   const visibleSegments = useMemo(
-    () => appState.segments.filter((segment) => !pendingDeleteIds.includes(segment.id)),
+    () => (Array.isArray(appState.segments) ? appState.segments : []).filter((segment) => !pendingDeleteIds.includes(segment.id)),
     [appState.segments, pendingDeleteIds],
   );
 
@@ -55,7 +55,9 @@ export function StatsScreen({ appState, setAppState, onBack }: Props) {
     if (pendingDeleteIds.length) {
       setAppState((state) => ({
         ...state,
-        segments: state.segments.filter((segment) => !pendingDeleteIds.includes(segment.id)),
+        segments: (Array.isArray(state.segments) ? state.segments : []).filter(
+          (segment) => !pendingDeleteIds.includes(segment.id),
+        ),
       }));
     }
     setActiveDayIndex(null);

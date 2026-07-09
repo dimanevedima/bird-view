@@ -36,7 +36,11 @@ function readRuntime(): TimerRuntime | null {
 }
 
 function writeRuntime(runtime: TimerRuntime) {
-  window.localStorage.setItem(RUNTIME_KEY, JSON.stringify(runtime));
+  try {
+    window.localStorage.setItem(RUNTIME_KEY, JSON.stringify(runtime));
+  } catch {
+    // Timer should keep working even if storage is unavailable in PWA/private contexts.
+  }
 }
 
 function nextModeFor(currentMode: TimerMode, preset: TimerPreset): TimerMode {
@@ -52,6 +56,14 @@ function durationFor(mode: TimerMode, preset: TimerPreset) {
   return mode === "empty" ? positiveSeconds(preset.restSeconds, fallback) : fallback;
 }
 
+function safeRuntimeMode(value: unknown, fallback: TimerMode): TimerMode {
+  return value === "bird" || value === "pixel" || value === "empty" ? value : fallback;
+}
+
+function safeRuntimeStatus(value: unknown): TimerStatus {
+  return value === "running" || value === "paused" || value === "idle" ? value : "idle";
+}
+
 function hydrateRuntime(runtime: TimerRuntime | null, preset: TimerPreset) {
   if (!runtime || runtime.presetId !== preset.id) {
     return {
@@ -63,12 +75,13 @@ function hydrateRuntime(runtime: TimerRuntime | null, preset: TimerPreset) {
     };
   }
 
-  let mode = runtime.mode;
+  let mode = safeRuntimeMode(runtime.mode, preset.mode);
+  const status = safeRuntimeStatus(runtime.status);
   let remaining = positiveSeconds(runtime.remaining);
   const completedSegments: CompletedSegment[] = [];
-  let cursor = runtime.updatedAt;
-  if (runtime.status === "running") {
-    let elapsed = Math.max(0, Math.floor((Date.now() - runtime.updatedAt) / 1000));
+  let cursor = positiveSeconds(runtime.updatedAt, Date.now());
+  if (status === "running") {
+    let elapsed = Math.max(0, Math.floor((Date.now() - cursor) / 1000));
     while (elapsed >= remaining) {
       const durationSeconds = durationFor(mode, preset);
       completedSegments.push({ mode, durationSeconds, startedAt: cursor });
@@ -82,15 +95,16 @@ function hydrateRuntime(runtime: TimerRuntime | null, preset: TimerPreset) {
 
   return {
     mode,
-    status: runtime.status,
+    status,
     remaining,
-    sessionId: runtime.sessionId,
+    sessionId: typeof runtime.sessionId === "string" ? runtime.sessionId : null,
     completedSegments,
   };
 }
 
 export function useTimer({ appState, setAppState }: TimerControls) {
-  const allPresets = useMemo(() => [...presets, ...(appState.customPresets ?? [])], [appState.customPresets]);
+  const customPresets = Array.isArray(appState.customPresets) ? appState.customPresets : [];
+  const allPresets = useMemo(() => [...presets, ...customPresets], [customPresets]);
   const activePreset = useMemo(
     () => allPresets.find((preset) => preset.id === appState.settings.activePresetId) ?? allPresets[0],
     [allPresets, appState.settings.activePresetId],
@@ -177,7 +191,10 @@ export function useTimer({ appState, setAppState }: TimerControls) {
       startedAt: new Date().toISOString(),
       task: appState.currentTask,
     };
-    setAppState((state) => ({ ...state, sessions: [...state.sessions, session] }));
+    setAppState((state) => ({
+      ...state,
+      sessions: [...(Array.isArray(state.sessions) ? state.sessions : []), session],
+    }));
     return id;
   }
 
@@ -188,7 +205,7 @@ export function useTimer({ appState, setAppState }: TimerControls) {
     setAppState((state) => ({
       ...state,
       segments: [
-        ...state.segments,
+        ...(Array.isArray(state.segments) ? state.segments : []),
         ...workSegments.map((segment) => ({
           id: createId(),
           sessionId,
@@ -239,7 +256,7 @@ export function useTimer({ appState, setAppState }: TimerControls) {
       const id = currentSessionId.current;
       setAppState((state) => ({
         ...state,
-        sessions: state.sessions.map((session) =>
+        sessions: (Array.isArray(state.sessions) ? state.sessions : []).map((session) =>
           session.id === id && !session.endedAt ? { ...session, endedAt: new Date().toISOString() } : session,
         ),
       }));
