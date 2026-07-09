@@ -221,6 +221,10 @@ export function useTimer({ appState, setAppState }: TimerControls) {
     const finishedMode = mode;
     const durationSeconds = durationFor(finishedMode, activePreset);
     appendSegments([{ mode: finishedMode, durationSeconds, startedAt: Date.now() - durationSeconds * 1000 }]);
+    advancePhase(finishedMode);
+  }
+
+  function advancePhase(finishedMode: TimerMode) {
     const nextMode = nextModeFor(finishedMode, activePreset);
     setMode(nextMode);
     setRemaining(durationFor(nextMode, activePreset));
@@ -244,7 +248,7 @@ export function useTimer({ appState, setAppState }: TimerControls) {
   }
 
   function skip() {
-    completePhase();
+    advancePhase(mode);
   }
 
   function reset() {

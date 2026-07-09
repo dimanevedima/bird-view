@@ -117,7 +117,7 @@ export function TimerScreen({ appState, onOpenSettings, onOpenStats, setAppState
 
   return (
     <section className={`timer-screen mode-${timer.mode} focus-${focusMode}`}>
-      {timer.mode === "empty" ? <div className="empty-light" aria-hidden="true" /> : <MotionLight />}
+      <MotionLight />
       <button className="quiet-settings" onClick={onOpenSettings} aria-label="Open timer settings">
         <Settings size={18} />
       </button>

@@ -605,18 +605,6 @@ select:focus-visible {
     linear-gradient(90deg, rgba(0, 0, 0, 0.78), transparent 40%, transparent 60%, rgba(0, 0, 0, 0.78));
 }
 
-.mode-empty .lamp-rig {
-  animation: none;
-  opacity: 0.36;
-  transform: translateX(-50%);
-}
-
-.mode-empty .lamp-glow,
-.mode-empty .light-cone,
-.mode-empty .light-dust {
-  display: none;
-}
-
 .mode-empty .progress-dots .filled {
   background: rgba(232, 232, 232, 0.78);
   box-shadow: 0 0 14px rgba(232, 232, 232, 0.2);
