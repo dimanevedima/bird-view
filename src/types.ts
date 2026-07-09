@@ -16,6 +16,7 @@ export type TimerSettings = {
   soundEnabled: boolean;
   soundId: SoundId;
   focusMode: WorkProfile;
+  notificationsEnabled: boolean;
 };
 
 export type TimerRuntime = {

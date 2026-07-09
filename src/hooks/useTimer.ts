@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import { presets } from "../data/presets";
 import type { AppState, TimerMode, TimerPreset, TimerRuntime, TimerSession, TimerStatus } from "../types";
+import { startKeepAlive, stopKeepAlive } from "../utils/backgroundKeepAlive";
+import { notifyCatchUp, notifyPhaseComplete } from "../utils/notifications";
 import { playSound } from "../utils/sound";
 
 const RUNTIME_KEY = "bird-view-timer-runtime";
@@ -125,6 +127,7 @@ export function useTimer({ appState, setAppState }: TimerControls) {
     if (hydrated.sessionId && !tallyIsEmpty(hydrated.tally)) {
       updateSession((session) => applyTally(session, hydrated.tally));
     }
+    if (hydrated.status === "running") startKeepAlive();
   }, [activePreset.id]);
 
   useEffect(() => {
@@ -141,8 +144,12 @@ export function useTimer({ appState, setAppState }: TimerControls) {
       const hydrated = hydrateRuntime(runtime, activePreset);
       setMode(hydrated.mode);
       setRemaining(hydrated.remaining);
+      startKeepAlive();
       if (!tallyIsEmpty(hydrated.tally)) {
         updateSession((session) => applyTally(session, hydrated.tally));
+        if (appState.settings.notificationsEnabled) {
+          notifyCatchUp(hydrated.tally.birdPulses + hydrated.tally.pixelBlocks, hydrated.tally.emptySpaces, hydrated.mode);
+        }
       }
     }
     document.addEventListener("visibilitychange", resyncAfterBackground);
@@ -151,7 +158,7 @@ export function useTimer({ appState, setAppState }: TimerControls) {
       document.removeEventListener("visibilitychange", resyncAfterBackground);
       window.removeEventListener("focus", resyncAfterBackground);
     };
-  }, [activePreset]);
+  }, [activePreset, appState.settings.notificationsEnabled]);
 
   useEffect(() => {
     writeRuntime({
@@ -226,16 +233,21 @@ export function useTimer({ appState, setAppState }: TimerControls) {
     setMode(nextMode);
     setRemaining(durationFor(nextMode, activePreset));
     playSound(appState.settings.soundId, "phase", appState.settings.soundEnabled);
+    if (appState.settings.notificationsEnabled) {
+      notifyPhaseComplete(mode, nextMode);
+    }
   }
 
   function start() {
     ensureSession();
     setStatus("running");
+    startKeepAlive();
     playSound(appState.settings.soundId, "click", appState.settings.soundEnabled);
   }
 
   function pause() {
     setStatus("paused");
+    stopKeepAlive();
     playSound(appState.settings.soundId, "click", appState.settings.soundEnabled);
   }
 
@@ -247,6 +259,7 @@ export function useTimer({ appState, setAppState }: TimerControls) {
     setStatus("idle");
     setMode(activePreset.mode);
     setRemaining(activePreset.workSeconds);
+    stopKeepAlive();
     if (currentSessionId.current) {
       const id = currentSessionId.current;
       setAppState((state) => ({

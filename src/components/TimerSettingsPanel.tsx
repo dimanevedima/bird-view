@@ -1,8 +1,9 @@
-import { Check, Play, Volume2, X } from "lucide-react";
+import { Bell, Check, Play, Volume2, X } from "lucide-react";
 import type { Dispatch, SetStateAction } from "react";
 import { useMemo, useState } from "react";
 import { birdPresets, pixelPresets, presets } from "../data/presets";
 import type { AppState, SoundId, TimerPreset, WorkProfile } from "../types";
+import { notificationPermission, requestNotificationPermission } from "../utils/notifications";
 import { playSound } from "../utils/sound";
 
 type Props = {
@@ -28,6 +29,19 @@ export function TimerSettingsPanel({ appState, onClose, setAppState }: Props) {
   const [workMinutes, setWorkMinutes] = useState(draftMode === "pixel" ? 45 : 5);
   const [restValue, setRestValue] = useState(draftMode === "pixel" ? 10 : 45);
   const [restUnit, setRestUnit] = useState<"sec" | "min">(draftMode === "pixel" ? "min" : "sec");
+  const [permission, setPermission] = useState(() => notificationPermission());
+
+  async function toggleNotifications() {
+    if (appState.settings.notificationsEnabled) {
+      setAppState((state) => ({ ...state, settings: { ...state.settings, notificationsEnabled: false } }));
+      return;
+    }
+    const result = await requestNotificationPermission();
+    setPermission(result);
+    if (result === "granted") {
+      setAppState((state) => ({ ...state, settings: { ...state.settings, notificationsEnabled: true } }));
+    }
+  }
 
   function setPreset(preset: TimerPreset) {
     setAppState((state) => ({
@@ -176,6 +190,26 @@ export function TimerSettingsPanel({ appState, onClose, setAppState }: Props) {
               </button>
             ))}
           </div>
+        </section>
+
+        <section className="settings-section">
+          <div className="sound-head">
+            <p className="settings-label">Notifications</p>
+            <button
+              className={appState.settings.notificationsEnabled ? "sound-toggle on" : "sound-toggle"}
+              onClick={() => void toggleNotifications()}
+            >
+              <Bell size={16} />
+              {appState.settings.notificationsEnabled ? "On" : "Off"}
+            </button>
+          </div>
+          <p className="subtle">
+            {permission === "denied"
+              ? "Blocked in browser settings — allow notifications for this site to use it."
+              : permission === "unsupported"
+                ? "Not supported in this browser."
+                : "Alerts you when a pulse or empty space finishes, even after you switch away."}
+          </p>
         </section>
       </section>
     </div>

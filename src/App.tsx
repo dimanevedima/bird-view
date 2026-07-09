@@ -16,6 +16,7 @@ const initialState: AppState = {
     focusMode: "bird",
     soundEnabled: true,
     soundId: "soft",
+    notificationsEnabled: false,
   },
   currentTask: "Finish intro",
   sessions: [],
