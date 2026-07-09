@@ -20,6 +20,7 @@ const initialState: AppState = {
   },
   currentTask: "Finish intro",
   sessions: [],
+  segments: [],
   customPresets: [],
 };
 
@@ -36,6 +37,7 @@ export default function App() {
         ...(storedState.settings ?? {}),
       },
       sessions: storedState.sessions ?? [],
+      segments: storedState.segments ?? [],
       customPresets: storedState.customPresets ?? [],
     }),
     [storedState],
@@ -64,9 +66,15 @@ export default function App() {
   return (
     <AppShell activeTab={activeTab} onOpenSettings={() => setSettingsOpen(true)} onTabChange={setActiveTab}>
       {activeTab === "timer" ? (
-        <TimerScreen appState={appState} setAppState={setAppState} timer={timer} onOpenSettings={() => setSettingsOpen(true)} />
+        <TimerScreen
+          appState={appState}
+          setAppState={setAppState}
+          timer={timer}
+          onOpenSettings={() => setSettingsOpen(true)}
+          onOpenStats={() => setActiveTab("stats")}
+        />
       ) : (
-        <StatsScreen sessions={appState.sessions} />
+        <StatsScreen appState={appState} setAppState={setAppState} onBack={() => setActiveTab("timer")} />
       )}
       {settingsOpen ? (
         <TimerSettingsPanel appState={appState} setAppState={setAppState} onClose={() => setSettingsOpen(false)} />

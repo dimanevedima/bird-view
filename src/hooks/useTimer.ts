@@ -13,6 +13,12 @@ type TimerControls = {
   setAppState: Dispatch<SetStateAction<AppState>>;
 };
 
+type CompletedSegment = {
+  mode: TimerMode;
+  durationSeconds: number;
+  startedAt: number;
+};
+
 function readRuntime(): TimerRuntime | null {
   try {
     const item = window.localStorage.getItem(RUNTIME_KEY);
@@ -34,44 +40,6 @@ function durationFor(mode: TimerMode, preset: TimerPreset) {
   return mode === "empty" ? preset.restSeconds : preset.workSeconds;
 }
 
-type CompletionTally = {
-  workSeconds: number;
-  restSeconds: number;
-  birdPulses: number;
-  emptySpaces: number;
-  pixelBlocks: number;
-};
-
-function emptyTally(): CompletionTally {
-  return { workSeconds: 0, restSeconds: 0, birdPulses: 0, emptySpaces: 0, pixelBlocks: 0 };
-}
-
-function tallyIsEmpty(tally: CompletionTally) {
-  return !tally.workSeconds && !tally.restSeconds && !tally.birdPulses && !tally.emptySpaces && !tally.pixelBlocks;
-}
-
-function recordCompletion(mode: TimerMode, preset: TimerPreset, tally: CompletionTally) {
-  if (mode === "empty") {
-    tally.restSeconds += preset.restSeconds;
-    tally.emptySpaces += 1;
-  } else {
-    tally.workSeconds += preset.workSeconds;
-    if (mode === "pixel") tally.pixelBlocks += 1;
-    else tally.birdPulses += 1;
-  }
-}
-
-function applyTally(session: TimerSession, tally: CompletionTally): TimerSession {
-  return {
-    ...session,
-    workSecondsCompleted: session.workSecondsCompleted + tally.workSeconds,
-    restSecondsCompleted: session.restSecondsCompleted + tally.restSeconds,
-    birdPulsesCompleted: session.birdPulsesCompleted + tally.birdPulses,
-    emptySpacesCompleted: session.emptySpacesCompleted + tally.emptySpaces,
-    pixelBlocksCompleted: session.pixelBlocksCompleted + tally.pixelBlocks,
-  };
-}
-
 function hydrateRuntime(runtime: TimerRuntime | null, preset: TimerPreset) {
   if (!runtime || runtime.presetId !== preset.id) {
     return {
@@ -79,18 +47,21 @@ function hydrateRuntime(runtime: TimerRuntime | null, preset: TimerPreset) {
       status: "idle" as TimerStatus,
       remaining: preset.workSeconds,
       sessionId: null,
-      tally: emptyTally(),
+      completedSegments: [] as CompletedSegment[],
     };
   }
 
   let mode = runtime.mode;
   let remaining = Math.max(1, runtime.remaining);
-  const tally = emptyTally();
+  const completedSegments: CompletedSegment[] = [];
+  let cursor = runtime.updatedAt;
   if (runtime.status === "running") {
     let elapsed = Math.max(0, Math.floor((Date.now() - runtime.updatedAt) / 1000));
     while (elapsed >= remaining) {
+      const durationSeconds = durationFor(mode, preset);
+      completedSegments.push({ mode, durationSeconds, startedAt: cursor });
+      cursor += durationSeconds * 1000;
       elapsed -= remaining;
-      recordCompletion(mode, preset, tally);
       mode = nextModeFor(mode, preset);
       remaining = durationFor(mode, preset);
     }
@@ -102,7 +73,7 @@ function hydrateRuntime(runtime: TimerRuntime | null, preset: TimerPreset) {
     status: runtime.status,
     remaining,
     sessionId: runtime.sessionId,
-    tally,
+    completedSegments,
   };
 }
 
@@ -124,9 +95,7 @@ export function useTimer({ appState, setAppState }: TimerControls) {
     setMode(hydrated.mode);
     setStatus(hydrated.status);
     setRemaining(hydrated.remaining);
-    if (hydrated.sessionId && !tallyIsEmpty(hydrated.tally)) {
-      updateSession((session) => applyTally(session, hydrated.tally));
-    }
+    if (hydrated.completedSegments.length) appendSegments(hydrated.completedSegments);
     if (hydrated.status === "running") startKeepAlive();
   }, [activePreset.id]);
 
@@ -145,10 +114,12 @@ export function useTimer({ appState, setAppState }: TimerControls) {
       setMode(hydrated.mode);
       setRemaining(hydrated.remaining);
       startKeepAlive();
-      if (!tallyIsEmpty(hydrated.tally)) {
-        updateSession((session) => applyTally(session, hydrated.tally));
+      if (hydrated.completedSegments.length) {
+        appendSegments(hydrated.completedSegments);
         if (appState.settings.notificationsEnabled) {
-          notifyCatchUp(hydrated.tally.birdPulses + hydrated.tally.pixelBlocks, hydrated.tally.emptySpaces, hydrated.mode);
+          const workCount = hydrated.completedSegments.filter((seg) => seg.mode !== "empty").length;
+          const restCount = hydrated.completedSegments.filter((seg) => seg.mode === "empty").length;
+          notifyCatchUp(workCount, restCount, hydrated.mode);
         }
       }
     }
@@ -194,47 +165,39 @@ export function useTimer({ appState, setAppState }: TimerControls) {
       id,
       startedAt: new Date().toISOString(),
       task: appState.currentTask,
-      workSecondsCompleted: 0,
-      restSecondsCompleted: 0,
-      birdPulsesCompleted: 0,
-      emptySpacesCompleted: 0,
-      pixelBlocksCompleted: 0,
     };
     setAppState((state) => ({ ...state, sessions: [...state.sessions, session] }));
     return id;
   }
 
-  function updateSession(mutator: (session: TimerSession) => TimerSession) {
-    const id = ensureSession();
+  function appendSegments(completed: CompletedSegment[]) {
+    if (!completed.length) return;
+    const sessionId = ensureSession();
     setAppState((state) => ({
       ...state,
-      sessions: state.sessions.map((session) => (session.id === id ? mutator(session) : session)),
+      segments: [
+        ...state.segments,
+        ...completed.map((segment) => ({
+          id: crypto.randomUUID(),
+          sessionId,
+          mode: segment.mode,
+          startedAt: new Date(segment.startedAt).toISOString(),
+          durationSeconds: segment.durationSeconds,
+        })),
+      ],
     }));
   }
 
   function completePhase() {
-    updateSession((session) => {
-      if (mode === "empty") {
-        return {
-          ...session,
-          restSecondsCompleted: session.restSecondsCompleted + activePreset.restSeconds,
-          emptySpacesCompleted: session.emptySpacesCompleted + 1,
-        };
-      }
-      const isPixel = mode === "pixel";
-      return {
-        ...session,
-        workSecondsCompleted: session.workSecondsCompleted + activePreset.workSeconds,
-        birdPulsesCompleted: session.birdPulsesCompleted + (isPixel ? 0 : 1),
-        pixelBlocksCompleted: session.pixelBlocksCompleted + (isPixel ? 1 : 0),
-      };
-    });
-    const nextMode = nextModeFor(mode, activePreset);
+    const finishedMode = mode;
+    const durationSeconds = durationFor(finishedMode, activePreset);
+    appendSegments([{ mode: finishedMode, durationSeconds, startedAt: Date.now() - durationSeconds * 1000 }]);
+    const nextMode = nextModeFor(finishedMode, activePreset);
     setMode(nextMode);
     setRemaining(durationFor(nextMode, activePreset));
     playSound(appState.settings.soundId, "phase", appState.settings.soundEnabled);
     if (appState.settings.notificationsEnabled) {
-      notifyPhaseComplete(mode, nextMode);
+      notifyPhaseComplete(finishedMode, nextMode);
     }
   }
 

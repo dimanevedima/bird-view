@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import type { CSSProperties, Dispatch, PointerEvent, SetStateAction, TouchEvent } from "react";
-import { Pause, Play, RotateCcw, Settings, SkipForward, Square } from "lucide-react";
+import { BarChart2, Pause, Play, RotateCcw, Settings, SkipForward, Square } from "lucide-react";
 import { birdPresets, pixelPresets } from "../data/presets";
 import { IntervalPickerSheet } from "./IntervalPickerSheet";
 import { MotionLight } from "./MotionLight";
@@ -13,11 +13,12 @@ type TimerApi = ReturnType<typeof import("../hooks/useTimer").useTimer>;
 type Props = {
   appState: AppState;
   onOpenSettings: () => void;
+  onOpenStats: () => void;
   setAppState: Dispatch<SetStateAction<AppState>>;
   timer: TimerApi;
 };
 
-export function TimerScreen({ appState, onOpenSettings, setAppState, timer }: Props) {
+export function TimerScreen({ appState, onOpenSettings, onOpenStats, setAppState, timer }: Props) {
   const focusMode = appState.settings.focusMode ?? "bird";
   const pullStartY = useRef<number | null>(null);
   const [pullDistance, setPullDistance] = useState(0);
@@ -118,6 +119,9 @@ export function TimerScreen({ appState, onOpenSettings, setAppState, timer }: Pr
       <MotionLight />
       <button className="quiet-settings" onClick={onOpenSettings} aria-label="Open timer settings">
         <Settings size={18} />
+      </button>
+      <button className="quiet-stats" onClick={onOpenStats} aria-label="Open weekly stats">
+        <BarChart2 size={18} />
       </button>
       <button
         className={isPulling ? "pull-cord is-pulling" : "pull-cord"}

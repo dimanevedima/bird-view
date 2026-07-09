@@ -1,164 +1,165 @@
-import { CalendarDays, Download, Settings } from "lucide-react";
-import type { TimerSession } from "../types";
-import { getTodayStats } from "../utils/stats";
-import { formatDuration } from "../utils/time";
+import { ArrowLeft, ChevronLeft, ChevronRight, Trash2, Undo2, X } from "lucide-react";
+import type { Dispatch, SetStateAction } from "react";
+import { useMemo, useState } from "react";
+import type { AppState, FocusSegment } from "../types";
+import { formatWeekLabel, isSameDay, segmentsForDay, startOfWeek, weekDays } from "../utils/stats";
 
 type Props = {
-  sessions: TimerSession[];
+  appState: AppState;
+  setAppState: Dispatch<SetStateAction<AppState>>;
+  onBack: () => void;
 };
 
-const days = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
-const hours = Array.from({ length: 24 }, (_, index) => index);
+const dayLabels = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 
-export function StatsScreen({ sessions }: Props) {
-  const today = getTodayStats(sessions);
-  const syntheticFocus = [3.8, 5.1, 7.7, 6.4, 6.3, 2.4, 0.8];
-  const totalFocus = Math.max(today.focusedSeconds, 12756);
-  const totalRest = Math.max(today.restSeconds, 2690);
-  const pixelBlocks = Math.max(today.pixelBlocks, 3);
-  const pulses = Math.max(today.pulses, 8);
+function segmentLabel(mode: FocusSegment["mode"]) {
+  if (mode === "empty") return "Empty Space";
+  if (mode === "pixel") return "Pixel Block";
+  return "Work Pulse";
+}
+
+function formatDuration(seconds: number) {
+  if (seconds < 60) return `${seconds} sec`;
+  return `${Math.round(seconds / 60)} min`;
+}
+
+function formatTime(iso: string) {
+  return new Date(iso).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", hour12: false });
+}
+
+export function StatsScreen({ appState, setAppState, onBack }: Props) {
+  const [weekOffset, setWeekOffset] = useState(0);
+  const [activeDayIndex, setActiveDayIndex] = useState<number | null>(null);
+  const [pendingDeleteIds, setPendingDeleteIds] = useState<string[]>([]);
+
+  const weekStart = useMemo(() => {
+    const start = startOfWeek(new Date());
+    start.setDate(start.getDate() + weekOffset * 7);
+    return start;
+  }, [weekOffset]);
+  const days = useMemo(() => weekDays(weekStart), [weekStart]);
+
+  const visibleSegments = useMemo(
+    () => appState.segments.filter((segment) => !pendingDeleteIds.includes(segment.id)),
+    [appState.segments, pendingDeleteIds],
+  );
+
+  const daySegments = useMemo(() => days.map((day) => segmentsForDay(visibleSegments, day)), [days, visibleSegments]);
+
+  function openDay(index: number) {
+    setActiveDayIndex(index);
+    setPendingDeleteIds([]);
+  }
+
+  function closeDay() {
+    if (pendingDeleteIds.length) {
+      setAppState((state) => ({
+        ...state,
+        segments: state.segments.filter((segment) => !pendingDeleteIds.includes(segment.id)),
+      }));
+    }
+    setActiveDayIndex(null);
+    setPendingDeleteIds([]);
+  }
+
+  function deleteSegment(id: string) {
+    setPendingDeleteIds((ids) => [...ids, id]);
+  }
+
+  function undoDelete() {
+    setPendingDeleteIds((ids) => ids.slice(0, -1));
+  }
+
+  const activeDay = activeDayIndex === null ? null : days[activeDayIndex];
+  const activeSegments = activeDayIndex === null ? [] : daySegments[activeDayIndex];
 
   return (
     <section className="stats-screen">
-      <div className="stats-head">
-        <div>
-          <p className="section-title">Weekly Focus Heatmap</p>
-          <p className="subtle">Work pulse / pixel view / empty space</p>
-        </div>
-        <div className="date-range">
-          <CalendarDays size={15} />
-          May 12 - May 18
-        </div>
+      <button className="quiet-back" onClick={onBack} aria-label="Back to timer">
+        <ArrowLeft size={18} />
+      </button>
+      <header className="week-nav">
+        <button onClick={() => setWeekOffset((value) => value - 1)} aria-label="Previous week">
+          <ChevronLeft size={18} />
+        </button>
+        <p className="week-label">{formatWeekLabel(weekStart, weekOffset)}</p>
+        <button onClick={() => setWeekOffset((value) => Math.min(0, value + 1))} disabled={weekOffset === 0} aria-label="Next week">
+          <ChevronRight size={18} />
+        </button>
+      </header>
+
+      <div className="week-rows">
+        {days.map((day, index) => {
+          const focusSegments = daySegments[index].filter((segment) => segment.mode !== "empty");
+          const isToday = isSameDay(day, new Date());
+          return (
+            <button key={index} className={isToday ? "day-row is-today" : "day-row"} onClick={() => openDay(index)}>
+              <span className="day-name">{dayLabels[index]}</span>
+              <span className="day-squares">
+                {focusSegments.length === 0 ? (
+                  <i className="square-empty" />
+                ) : (
+                  focusSegments.map((segment) => <i key={segment.id} className={`square-${segment.mode}`} />)
+                )}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
-      <section className="heatmap-panel" aria-label="Weekly focus heatmap">
-        <div className="hour-labels">
-          <span />
-          {hours.map((hour) => (
-            <span key={hour}>{hour.toString().padStart(2, "0")}</span>
-          ))}
-        </div>
-        {days.map((day, dayIndex) => (
-          <div className="heat-row" key={day}>
-            <span className="day-label">{day}</span>
-            {hours.map((hour) => (
-              <div className="hour-cell" key={`${day}-${hour}`}>
-                {Array.from({ length: 12 }, (_, index) => {
-                  const active = intensity(dayIndex, hour, index);
-                  return <span key={index} className={active} />;
-                })}
-              </div>
-            ))}
-          </div>
-        ))}
-        <div className="heat-legend">
-          <span>Low</span>
-          <i className="legend teal" />
-          <i className="legend amber" />
-          <i className="legend mute" />
-          <span>High</span>
-          <span className="no-data">No data</span>
-        </div>
-      </section>
+      <div className="week-legend">
+        <span>
+          <i className="square-bird" />
+          Bird
+        </span>
+        <span>
+          <i className="square-pixel" />
+          Pixel
+        </span>
+      </div>
 
-      <section className="stats-metrics">
-        <StatCard label="Focused time today" value={formatDuration(totalFocus, false)} unit="hrs" />
-        <StatCard label="Pulses completed" value={String(pulses)} unit="/ 12" />
-        <StatCard label="Work / pause ratio" value="68 / 32" unit="%" />
-        <StatCard label="Best day" value="Wednesday" unit="06:17 hrs" />
-        <StatCard label="Current streak" value="12" unit="days" />
-      </section>
-
-      <section className="dashboard-grid">
-        <div className="data-panel">
-          <p className="section-title">Weekly Focus Total (hrs)</p>
-          <div className="bar-chart">
-            {syntheticFocus.map((value, index) => (
-              <div className="bar-column" key={days[index]}>
-                <span style={{ height: `${(value / 8) * 100}%` }} />
-                <small>{days[index]}</small>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="data-panel">
-          <p className="section-title">Bird / Pixel Ratio</p>
-          <div className="ratio-stack" aria-label="Time distribution">
-            <span style={{ width: "58%" }} />
-            <span style={{ width: `${Math.max(18, pixelBlocks * 6)}%` }} />
-            <span style={{ width: "18%" }} />
-          </div>
-          <div className="ratio-list">
-            <p><i className="teal-dot" />Bird View <strong>58%</strong></p>
-            <p><i className="amber-dot" />Pixel View <strong>24%</strong></p>
-            <p><i className="gray-dot" />Empty Space <strong>18%</strong></p>
-          </div>
-        </div>
-        <div className="data-panel wide">
-          <p className="section-title">Session Timeline</p>
-          <div className="timeline">
-            {days.slice(4).map((day, dayIndex) => (
-              <div key={day}>
-                <span>{day}</span>
-                <div>
-                  {Array.from({ length: 72 }, (_, index) => (
-                    <i key={index} className={timelineClass(index, dayIndex)} />
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="data-panel">
-          <p className="section-title">Starts per day</p>
-          <div className="starts">
-            {days.map((day, dayIndex) => (
-              <p key={day}>
-                <span>{day}</span>
-                {Array.from({ length: 7 }, (_, index) => (
-                  <i key={index} className={index <= (dayIndex + pulses) % 6 ? "on" : ""} />
-                ))}
-                <strong>{(dayIndex + pulses) % 6}</strong>
+      {activeDay ? (
+        <div className="day-sheet-scrim" role="dialog" aria-modal="true" aria-label={`${dayLabels[activeDayIndex!]} segments`}>
+          <section className="day-sheet">
+            <header className="day-sheet-header">
+              <p className="section-title">
+                {dayLabels[activeDayIndex!]} · {activeDay.toLocaleDateString(undefined, { month: "short", day: "numeric" })}
               </p>
-            ))}
-          </div>
-        </div>
-      </section>
+              <button className="icon-button" onClick={closeDay} aria-label="Close">
+                <X size={20} />
+              </button>
+            </header>
 
-      <footer className="stats-footer">
-        <span>Data synced locally</span>
-        <button><Download size={15} />Export</button>
-        <button><Settings size={15} />Settings</button>
-      </footer>
+            <div className="day-segment-list">
+              {activeSegments.length === 0 ? (
+                <p className="subtle day-empty">No segments this day.</p>
+              ) : (
+                activeSegments.map((segment) => (
+                  <div key={segment.id} className="day-segment-row">
+                    <i className={`square-${segment.mode}`} />
+                    <span className="segment-time">{formatTime(segment.startedAt)}</span>
+                    <span className="segment-label">{segmentLabel(segment.mode)}</span>
+                    <span className="segment-duration">{formatDuration(segment.durationSeconds)}</span>
+                    <button onClick={() => deleteSegment(segment.id)} aria-label="Delete segment" className="segment-delete">
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {pendingDeleteIds.length ? (
+              <div className="undo-bar">
+                <span>{pendingDeleteIds.length} removed</span>
+                <button onClick={undoDelete}>
+                  <Undo2 size={14} />
+                  Undo
+                </button>
+              </div>
+            ) : null}
+          </section>
+        </div>
+      ) : null}
     </section>
   );
-}
-
-function StatCard({ label, value, unit }: { label: string; value: string; unit: string }) {
-  return (
-    <div className="stat-card">
-      <span>{label}</span>
-      <strong>{value}</strong>
-      <small>{unit}</small>
-    </div>
-  );
-}
-
-function intensity(day: number, hour: number, dot: number) {
-  const inFocusBand = hour >= 7 && hour <= 18;
-  const eveningTrace = hour >= 20 && hour <= 22 && day < 5;
-  const pulse = (day * 17 + hour * 11 + dot * 7) % 23;
-  if (!inFocusBand && !eveningTrace && pulse < 21) return "";
-  if (pulse > 19) return "pixel";
-  if (pulse > (inFocusBand ? 12 : 18)) return "work";
-  if (pulse === 6 || pulse === 8) return "empty";
-  return "";
-}
-
-function timelineClass(index: number, dayIndex: number) {
-  const mod = (index + dayIndex * 9) % 23;
-  if (mod < 4) return "work";
-  if (mod === 11 || mod === 12) return "pixel";
-  if (mod === 17) return "empty";
-  return "";
 }

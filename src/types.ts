@@ -33,16 +33,20 @@ export type TimerSession = {
   startedAt: string;
   endedAt?: string;
   task?: string;
-  workSecondsCompleted: number;
-  restSecondsCompleted: number;
-  birdPulsesCompleted: number;
-  emptySpacesCompleted: number;
-  pixelBlocksCompleted: number;
+};
+
+export type FocusSegment = {
+  id: string;
+  sessionId: string;
+  mode: TimerMode;
+  startedAt: string;
+  durationSeconds: number;
 };
 
 export type AppState = {
   settings: TimerSettings;
   currentTask: string;
   sessions: TimerSession[];
+  segments: FocusSegment[];
   customPresets: TimerPreset[];
 };
