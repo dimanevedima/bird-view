@@ -43,8 +43,13 @@ function nextModeFor(currentMode: TimerMode, preset: TimerPreset): TimerMode {
   return currentMode === "empty" ? preset.mode : "empty";
 }
 
+function positiveSeconds(value: unknown, fallback = 1) {
+  return typeof value === "number" && Number.isFinite(value) && value > 0 ? value : fallback;
+}
+
 function durationFor(mode: TimerMode, preset: TimerPreset) {
-  return mode === "empty" ? preset.restSeconds : preset.workSeconds;
+  const fallback = positiveSeconds(preset.workSeconds);
+  return mode === "empty" ? positiveSeconds(preset.restSeconds, fallback) : fallback;
 }
 
 function hydrateRuntime(runtime: TimerRuntime | null, preset: TimerPreset) {
@@ -59,7 +64,7 @@ function hydrateRuntime(runtime: TimerRuntime | null, preset: TimerPreset) {
   }
 
   let mode = runtime.mode;
-  let remaining = Math.max(1, runtime.remaining);
+  let remaining = positiveSeconds(runtime.remaining);
   const completedSegments: CompletedSegment[] = [];
   let cursor = runtime.updatedAt;
   if (runtime.status === "running") {
@@ -72,7 +77,7 @@ function hydrateRuntime(runtime: TimerRuntime | null, preset: TimerPreset) {
       mode = nextModeFor(mode, preset);
       remaining = durationFor(mode, preset);
     }
-    remaining = Math.max(1, remaining - elapsed);
+    remaining = positiveSeconds(remaining - elapsed);
   }
 
   return {
@@ -161,7 +166,7 @@ export function useTimer({ appState, setAppState }: TimerControls) {
   }, [status, remaining]);
 
   const duration = durationFor(mode, activePreset);
-  const progress = duration ? 1 - remaining / duration : 0;
+  const progress = Math.max(0, Math.min(1, duration ? 1 - positiveSeconds(remaining) / duration : 0));
 
   function ensureSession() {
     if (currentSessionId.current) return currentSessionId.current;

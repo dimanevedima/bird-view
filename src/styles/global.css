@@ -217,6 +217,7 @@ select:focus-visible {
 
 .lamp-rig {
   --swing-angle: 9.5deg;
+  --swing-angle-neg: -9.5deg;
   --swing-duration: 3300ms;
   --swing-x: 64px;
   --swing-drop: 7px;
@@ -343,7 +344,7 @@ select:focus-visible {
 @keyframes lampAutoSwing {
   0%,
   100% {
-    transform: translateX(calc(-50% - var(--swing-x))) translateY(var(--swing-drop)) rotate(calc(var(--swing-angle) * -1));
+    transform: translateX(calc(-50% - var(--swing-x))) translateY(var(--swing-drop)) rotate(var(--swing-angle-neg));
   }
 
   24% {
@@ -569,6 +570,40 @@ select:focus-visible {
 .mode-empty .mode-title,
 .mode-empty .progress-dots .filled {
   color: rgba(232, 232, 232, 0.8);
+}
+
+.mode-empty {
+  --light-core: rgba(232, 232, 232, 0.12);
+  --light-haze: rgba(232, 232, 232, 0.06);
+  --light-wash: rgba(232, 232, 232, 0.04);
+  background:
+    radial-gradient(ellipse at 50% 38%, rgba(255, 255, 255, 0.04), transparent 32%),
+    #020202;
+}
+
+.mode-empty .motion-light::before {
+  background: radial-gradient(ellipse at 50% 34%, rgba(255, 255, 255, 0.08), transparent 42%);
+  filter: none;
+  mix-blend-mode: normal;
+  opacity: 0.34;
+}
+
+.mode-empty .motion-light::after {
+  background:
+    radial-gradient(ellipse at 50% 38%, transparent 0 22%, rgba(0, 0, 0, 0.42) 58%, rgba(0, 0, 0, 0.88) 100%),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.78), transparent 40%, transparent 60%, rgba(0, 0, 0, 0.78));
+}
+
+.mode-empty .lamp-rig {
+  animation: none;
+  opacity: 0.36;
+  transform: translateX(-50%);
+}
+
+.mode-empty .lamp-glow,
+.mode-empty .light-cone,
+.mode-empty .light-dust {
+  display: none;
 }
 
 .mode-empty .progress-dots .filled {
@@ -1381,6 +1416,7 @@ select:focus-visible {
 
   .lamp-rig {
     --swing-angle: 7.8deg;
+    --swing-angle-neg: -7.8deg;
     --swing-duration: 3000ms;
     --swing-x: 46px;
     --swing-drop: 5px;
